@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkShort | URL Shortener & Blog</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <style>
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #f0f4ff 0%, #d6e4ff 100%);
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        .blog-card {
+            transition: all 0.3s ease;
+        }
+        .blog-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .link-post {
+            border-left: 4px solid #4f46e5;
+        }
+    </style>
+</head>
+<body class="font-['Inter'] bg-gray-50 text-gray-900 min-h-screen">
+    <div id="particles-js"></div>
+    
+    <!-- Redirect Modal -->
+    <div id="redirectModal" class="fixed inset-0 bg-black/80 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden">
+            <div class="p-8 text-center">
+                <div class="inline-block relative w-32 h-32 mb-6">
+                    <svg class="w-full h-full" viewBox="0 0 100 100">
+                        <circle class="text-gray-200" stroke-width="8" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
+                        <circle class="text-indigo-600 progress-ring__circle" stroke-width="8" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" 
+                            stroke-dasharray="251.2" stroke-dashoffset="251.2" />
+                    </svg>
+                    <span id="progressText" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl font-bold text-gray-700">0%</span>
+                </div>
+                <h2 id="statusText" class="text-xl font-semibold text-gray-700 mb-2">Verifying link...</h2>
+                <p class="text-gray-500 mb-6">Please wait while we process your request</p>
+                
+                <div id="redirectResult" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">Redirecting you to</h2>
+                    <div id="destinationUrl" class="bg-gray-50 p-4 rounded-lg mb-6 text-left break-all text-sm"></div>
+                    <a id="redirectBtn" href="#" class="inline-block px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors mb-4">
+                        Proceed Now
+                    </a>
+                    <div id="countdown" class="text-gray-500 text-sm">
+                        You will be automatically redirected in <span id="countdownSeconds">5</span> seconds
+                    </div>
+                </div>
+                
+                <div id="redirectError" class="hidden">
+                    <svg class="mx-auto h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h2 class="text-xl font-semibold text-gray-800 mt-4 mb-2">Error Processing Link</h2>
+                    <p id="errorMessage" class="text-gray-600 mb-6"></p>
+                    <a href="/" class="inline-block px-6 py-3 bg-gray-200 text-gray-700 font-medium rounded-lg hover:bg-gray-300 transition-colors">
+                        Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Layout -->
+    <div class="container mx-auto px-4 py-12">
+        <!-- Header -->
+        <header class="mb-12">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-indigo-600">LinkShort</h1>
+                    <p class="text-gray-600">Secure URL shortener and blog</p>
+                </div>
+                <a href="link-short.html" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    Create Link
+                </a>
+            </div>
+            <nav class="mt-6">
+                <ul class="flex space-x-6">
+                    <li><a href="/" class="text-indigo-600 font-medium">Home</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-indigo-600">About</a></li>
+                    <li><a href="#" class="text-gray-600 hover:text-indigo-600">Contact</a></li>
+                </ul>
+            </nav>
+        </header>
+        
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Blog Posts -->
+            <div class="lg:col-span-2 space-y-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Latest Posts</h2>
+                
+                <!-- Posts will be dynamically loaded here -->
+                <div id="blogPosts" class="space-y-8">
+                    <div class="bg-white rounded-lg shadow-md overflow-hidden blog-card">
+                        <div class="p-6">
+                            <div class="flex items-center text-sm text-gray-500 mb-2">
+                                <span>July 31, 2025</span>
+                                <span class="mx-2">•</span>
+                                <span>3 min read</span>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-800 mb-3">Welcome to LinkShort</h3>
+                            <p class="text-gray-600 mb-4">Our new URL shortener service is now live with advanced features and analytics.</p>
+                            <a href="#" class="text-indigo-600 font-medium hover:text-indigo-800 transition-colors">Read more →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">About LinkShort</h3>
+                    <p class="text-gray-600 mb-4">A secure URL shortener with analytics and blog platform. Create, track and share your links.</p>
+                    <a href="link-short.html" class="inline-block px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                        Get Started
+                    </a>
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md overflow-hidden p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Popular Links</h3>
+                    <div id="popularLinks" class="space-y-3">
+                        <!-- Dynamically loaded -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGntp_9Moqk54aWDIuqdR2uv-G3IhUXxU",
+            authDomain: "link-shortner-project-fc9dc.firebaseapp.com",
+            databaseURL: "https://link-shortner-project-fc9dc-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "link-shortner-project-fc9dc",
+            storageBucket: "link-shortner-project-fc9dc.firebasestorage.app",
+            messagingSenderId: "333006092673",
+            appId: "1:333006092673:web:ed5927494b158703ad1080"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Initialize Particles.js
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 60, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#4f46e5" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5, "random": true },
+                "size": { "value": 4, "random": true },
+                "line_linked": { "enable": true, "distance": 120, "color": "#4f46e5", "opacity": 0.2, "width": 1 },
+                "move": { "enable": true, "speed": 1.2, "direction": "none", "random": true }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": { "enable": true, "mode": "grab" },
+                    "onclick": { "enable": true, "mode": "push" }
+                }
+            }
+        });
+
+        // Format date for display
+        function formatBlogDate(date) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(date).toLocaleDateString('en-US', options);
+        }
+
+        // Check if URL has a slug parameter
+        function checkForSlug() {
+            const path = window.location.pathname;
+            const slug = path.split('/').pop();
+            
+            // If it's not the root path and not link-short.html
+            if (path !== '/' && !path.includes('link-short.html') && slug) {
+                processSlug(slug);
+            } else {
+                // Normal blog view - load content
+                loadBlogPosts();
+                loadPopularLinks();
+            }
+        }
+
+        // Process the slug
+        async function processSlug(slug) {
+            showRedirectModal();
+            
+            try {
+                // Get link data from Firebase
+                const snapshot = await database.ref('links/' + slug).once('value');
+                const linkData = snapshot.val();
+                
+                if (!linkData || !linkData.originalUrl || !linkData.isActive) {
+                    throw new Error('Link not found or expired');
+                }
+                
+                const originalUrl = linkData.originalUrl;
+                
+                // Update view count
+                const newViewCount = (linkData.viewCount || 0) + 1;
+                await database.ref('links/' + slug).update({ viewCount: newViewCount });
+                
+                // Start the loading animation
+                startLoadingAnimation(originalUrl);
+                
+            } catch (error) {
+                console.error('Error processing link:', error);
+                showRedirectError(error.message || 'Invalid or expired link');
+            }
+        }
+
+        // Show redirect modal
+        function showRedirectModal() {
+            document.getElementById('redirectModal').classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        // Hide redirect modal
+        function hideRedirectModal() {
+            document.getElementById('redirectModal').classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        // Start loading animation
+        function startLoadingAnimation(originalUrl) {
+            const duration = 3000; // 3 seconds
+            const interval = 30; // update every 30ms
+            const steps = duration / interval;
+            let currentStep = 0;
+            
+            const progressCircle = document.querySelector('.progress-ring__circle');
+            const progressText = document.getElementById('progressText');
+            const statusText = document.getElementById('statusText');
+            
+            const progressInterval = setInterval(() => {
+                currentStep++;
+                const progress = Math.min(currentStep / steps, 1);
+                const progressPercent = Math.round(progress * 100);
+                
+                const dashOffset = 251.2 - (progress * 251.2);
+                progressCircle.style.strokeDashoffset = dashOffset;
+                
+                progressText.textContent = `${progressPercent}%`;
+                
+                // Update status text based on progress
+                if (progressPercent < 25) {
+                    statusText.textContent = "Verifying security...";
+                } else if (progressPercent < 50) {
+                    statusText.textContent = "Checking link validity...";
+                } else if (progressPercent < 75) {
+                    statusText.textContent = "Preparing redirect...";
+                } else {
+                    statusText.textContent = "Almost there...";
+                }
+                
+                if (progressPercent === 100) {
+                    clearInterval(progressInterval);
+                    showRedirectResult(originalUrl);
+                }
+            }, interval);
+        }
+
+        // Show redirect result
+        function showRedirectResult(originalUrl) {
+            document.getElementById('loading').classList.add('hidden');
+            const resultElement = document.getElementById('redirectResult');
+            resultElement.classList.remove('hidden');
+            
+            document.getElementById('destinationUrl').textContent = originalUrl;
+            document.getElementById('redirectBtn').href = originalUrl;
+            
+            // Start countdown
+            let seconds = 5;
+            document.getElementById('countdownSeconds').textContent = seconds;
+            
+            const countdownInterval = setInterval(() => {
+                seconds--;
+                document.getElementById('countdownSeconds').textContent = seconds;
+                
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    window.location.href = originalUrl;
+                }
+            }, 1000);
+            
+            // Store the interval so we can clear it if user clicks manually
+            window.countdownInterval = countdownInterval;
+        }
+
+        // Show redirect error
+        function showRedirectError(message) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('redirectResult').classList.add('hidden');
+            
+            const errorElement = document.getElementById('redirectError');
+            errorElement.classList.remove('hidden');
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Load blog posts
+        async function loadBlogPosts() {
+            try {
+                const snapshot = await database.ref('posts').orderByChild('createdAt').limitToLast(10).once('value');
+                const postsContainer = document.getElementById('blogPosts');
+                postsContainer.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    postsContainer.innerHTML = '<p class="text-gray-500">No posts found</p>';
+                    return;
+                }
+                
+                const posts = [];
+                snapshot.forEach(childSnapshot => {
+                    posts.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                
+                // Sort by date (newest first)
+                posts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                // Display posts
+                posts.forEach(post => {
+                    const postElement = document.createElement('div');
+                    postElement.className = `bg-white rounded-lg shadow-md overflow-hidden blog-card ${post.type === 'link' ? 'link-post' : ''}`;
+                    
+                    if (post.type === 'link') {
+                        // Link post
+                        postElement.innerHTML = `
+                            <div class="p-6">
+                                <div class="flex items-center text-sm text-gray-500 mb-2">
+                                    <span>${formatBlogDate(post.createdAt)}</span>
+                                    <span class="mx-2">•</span>
+                                    <span>${post.linkData.viewCount || 0} views</span>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800 mb-3">Short Link: ${post.id}</h3>
+                                <p class="text-gray-600 mb-4">Redirects to: <a href="${post.linkData.originalUrl}" target="_blank" class="text-indigo-600 break-all">${post.linkData.originalUrl}</a></p>
+                                <a href="/${post.id}" target="_blank" class="text-indigo-600 font-medium hover:text-indigo-800 transition-colors">
+                                    Visit Short Link →
+                                </a>
+                            </div>
+                        `;
+                    } else {
+                        // Regular blog post
+                        postElement.innerHTML = `
+                            <div class="p-6">
+                                <div class="flex items-center text-sm text-gray-500 mb-2">
+                                    <span>${formatBlogDate(post.createdAt)}</span>
+                                    <span class="mx-2">•</span>
+                                    <span>3 min read</span>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-800 mb-3">${post.title}</h3>
+                                <p class="text-gray-600 mb-4">${post.content.substring(0, 150)}...</p>
+                                <a href="#" class="text-indigo-600 font-medium hover:text-indigo-800 transition-colors">
+                                    Read more →
+                                </a>
+                            </div>
+                        `;
+                    }
+                    
+                    postsContainer.appendChild(postElement);
+                });
+                
+            } catch (error) {
+                console.error("Error loading blog posts:", error);
+            }
+        }
+
+        // Load popular links
+        async function loadPopularLinks() {
+            try {
+                const snapshot = await database.ref('links').orderByChild('viewCount').limitToLast(5).once('value');
+                const linksContainer = document.getElementById('popularLinks');
+                linksContainer.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    linksContainer.innerHTML = '<p class="text-gray-500">No popular links yet</p>';
+                    return;
+                }
+                
+                const links = [];
+                snapshot.forEach(childSnapshot => {
+                    links.push({
+                        slug: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                
+                // Sort by view count (highest first)
+                links.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0));
+                
+                // Display links
+                links.forEach(link => {
+                    const linkElement = document.createElement('div');
+                    linkElement.className = 'flex justify-between items-center';
+                    linkElement.innerHTML = `
+                        <a href="/${link.slug}" class="text-indigo-600 hover:text-indigo-800 text-sm truncate">linkshort.vercel.app/${link.slug}</a>
+                        <span class="text-xs text-gray-500">${link.viewCount || 0}</span>
+                    `;
+                    linksContainer.appendChild(linkElement);
+                });
+                
+            } catch (error) {
+                console.error("Error loading popular links:", error);
+            }
+        }
+
+        // Cancel auto redirect if user clicks manually
+        document.getElementById('redirectBtn')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearInterval(window.countdownInterval);
+            window.location.href = e.target.href;
+        });
+
+        // Check for slug on page load
+        document.addEventListener('DOMContentLoaded', checkForSlug);
+    </script>
+</body>
+</html>
