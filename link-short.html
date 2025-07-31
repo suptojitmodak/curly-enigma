@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkShort | URL Shortener</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <style>
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, #f0f4ff 0%, #d6e4ff 100%);
+        }
+        .card-glow {
+            box-shadow: 0 0 25px rgba(79, 70, 229, 0.15);
+        }
+        .shine-effect:hover::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 40%;
+            height: 200%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(30deg);
+            transition: all 0.6s ease;
+        }
+        .shine-effect:hover::after {
+            left: 120%;
+        }
+    </style>
+</head>
+<body class="font-['Inter'] bg-gray-50 text-gray-900 min-h-screen">
+    <div id="particles-js"></div>
+    
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-4xl mx-auto">
+            <!-- Header -->
+            <header class="mb-12 text-center">
+                <h1 class="text-4xl font-bold text-indigo-600 mb-2">LinkShort</h1>
+                <p class="text-lg text-gray-600">Advanced URL Shortener with Analytics</p>
+            </header>
+            
+            <!-- Shortener Card -->
+            <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-xl overflow-hidden card-glow mb-12 shine-effect">
+                <div class="p-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Create New Short Link</h2>
+                    
+                    <div class="mb-6">
+                        <label for="originalUrl" class="block text-sm font-medium text-gray-700 mb-2">Destination URL</label>
+                        <input type="url" id="originalUrl" placeholder="https://example.com" 
+                            class="w-full px-4 py-3 rounded-lg border-0 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                        <div id="urlError" class="mt-1 text-sm text-red-600 hidden"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="customSlug" class="block text-sm font-medium text-gray-700 mb-2">Custom Alias (optional)</label>
+                            <input type="text" id="customSlug" placeholder="my-alias" 
+                                class="w-full px-4 py-3 rounded-lg border-0 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Short Code</label>
+                            <div class="flex">
+                                <span class="inline-flex items-center px-3 py-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
+                                    linkshort.vercel.app/
+                                </span>
+                                <input type="text" id="generatedSlug" readonly
+                                    class="flex-1 min-w-0 block w-full px-4 py-3 rounded-r-lg border-0 text-gray-900 ring-1 ring-inset ring-gray-300 bg-gray-50">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="shortenBtn" class="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors">
+                        Generate Short Link
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Result Section -->
+            <div id="result" class="hidden bg-white/95 backdrop-blur-md rounded-xl shadow-xl overflow-hidden card-glow mb-12">
+                <div class="p-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Your Short Link</h2>
+                    
+                    <div class="mb-6">
+                        <div class="flex rounded-lg shadow-sm mb-4">
+                            <div id="shortUrl" class="flex-1 px-4 py-3 bg-gray-50 rounded-l-lg border border-r-0 border-gray-300 text-gray-700 overflow-x-auto"></div>
+                            <button id="copyBtn" class="px-4 py-3 bg-gray-200 text-gray-700 border border-l-0 border-gray-300 hover:bg-gray-300 transition-colors">
+                                Copy
+                            </button>
+                            <button id="shareBtn" class="px-4 py-3 bg-indigo-100 text-indigo-700 border border-l-0 border-gray-300 hover:bg-indigo-200 transition-colors">
+                                Share
+                            </button>
+                            <a id="openBtn" target="_blank" class="px-4 py-3 bg-green-100 text-green-700 rounded-r-lg border border-l-0 border-gray-300 hover:bg-green-200 transition-colors flex items-center">
+                                Open
+                            </a>
+                        </div>
+                        
+                        <div class="flex justify-between items-center text-xs text-gray-500">
+                            <div id="linkStats" class="flex space-x-2">
+                                <span id="viewCount">0 views</span>
+                                <span>•</span>
+                                <span id="createdAt"></span>
+                            </div>
+                            <button id="qrBtn" class="text-indigo-600 hover:text-indigo-800 transition-colors">
+                                Get QR Code
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-indigo-50 p-4 rounded-lg">
+                        <h3 class="text-sm font-medium text-indigo-800 mb-2">Link Analytics</h3>
+                        <p class="text-xs text-indigo-600">This link will appear as a post on our blog. View analytics there.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Links Section -->
+            <div class="bg-white/95 backdrop-blur-md rounded-xl shadow-xl overflow-hidden card-glow">
+                <div class="p-8">
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-6">Your Recent Links</h2>
+                    <div id="recentLinks" class="space-y-4">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-gray-900">QR Code</h3>
+                <button id="closeQrModal" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="qrCode" class="flex justify-center mb-4"></div>
+            <div class="text-center text-sm text-gray-500">Scan to visit the shortened link</div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGntp_9Moqk54aWDIuqdR2uv-G3IhUXxU",
+            authDomain: "link-shortner-project-fc9dc.firebaseapp.com",
+            databaseURL: "https://link-shortner-project-fc9dc-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "link-shortner-project-fc9dc",
+            storageBucket: "link-shortner-project-fc9dc.firebasestorage.app",
+            messagingSenderId: "333006092673",
+            appId: "1:333006092673:web:ed5927494b158703ad1080"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Initialize Particles.js
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 70, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#4f46e5" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5, "random": true },
+                "size": { "value": 4, "random": true },
+                "line_linked": { "enable": true, "distance": 120, "color": "#4f46e5", "opacity": 0.2, "width": 1 },
+                "move": { "enable": true, "speed": 1.5, "direction": "none", "random": true }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": { "enable": true, "mode": "grab" },
+                    "onclick": { "enable": true, "mode": "push" }
+                }
+            }
+        });
+
+        // Generate a random short code
+        function generateShortCode() {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 6; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Format date
+        function formatDate(date) {
+            return new Date(date).toLocaleString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        // Check if alias/slug is available
+        async function isSlugAvailable(slug) {
+            const snapshot = await database.ref('links/' + slug).once('value');
+            return !snapshot.exists();
+        }
+
+        // Shorten button click handler
+        document.getElementById('shortenBtn').addEventListener('click', async function() {
+            const originalUrl = document.getElementById('originalUrl').value.trim();
+            const customSlug = document.getElementById('customSlug').value.trim();
+            const errorElement = document.getElementById('urlError');
+            
+            // Validate URL
+            if (!originalUrl) {
+                errorElement.textContent = "Please enter a URL";
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            
+            try {
+                new URL(originalUrl);
+            } catch (e) {
+                errorElement.textContent = "Please enter a valid URL";
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            
+            errorElement.classList.add('hidden');
+            
+            // Generate or use custom slug
+            let slug;
+            if (customSlug) {
+                if (!/^[a-zA-Z0-9_-]+$/.test(customSlug)) {
+                    errorElement.textContent = "Alias can only contain letters, numbers, hyphens and underscores";
+                    errorElement.classList.remove('hidden');
+                    return;
+                }
+                
+                if (!await isSlugAvailable(customSlug)) {
+                    errorElement.textContent = "This alias is already taken";
+                    errorElement.classList.remove('hidden');
+                    return;
+                }
+                
+                slug = customSlug;
+            } else {
+                slug = generateShortCode();
+                
+                // Ensure generated slug is available
+                let attempts = 0;
+                while (!await isSlugAvailable(slug) && attempts < 5) {
+                    slug = generateShortCode();
+                    attempts++;
+                }
+                
+                if (attempts >= 5) {
+                    errorElement.textContent = "Could not generate a unique short code. Please try again.";
+                    errorElement.classList.remove('hidden');
+                    return;
+                }
+            }
+            
+            // Update UI with generated slug
+            document.getElementById('generatedSlug').value = slug;
+            
+            // Save to Firebase
+            const createdAt = new Date().toISOString();
+            const linkData = {
+                originalUrl: originalUrl,
+                createdAt: createdAt,
+                viewCount: 0,
+                isActive: true
+            };
+            
+            try {
+                // Save to Firebase
+                await database.ref('links/' + slug).set(linkData);
+                
+                // Also save to posts for blog display
+                await database.ref('posts/' + slug).set({
+                    title: `Link: ${slug}`,
+                    content: `Shortened link to ${originalUrl}`,
+                    createdAt: createdAt,
+                    type: 'link',
+                    linkData: linkData
+                });
+                
+                // Construct short URL
+                const shortUrl = `https://linkshort.vercel.app/${slug}`;
+                
+                // Display result
+                document.getElementById('shortUrl').textContent = shortUrl;
+                document.getElementById('openBtn').href = shortUrl;
+                document.getElementById('createdAt').textContent = formatDate(createdAt);
+                document.getElementById('result').classList.remove('hidden');
+                
+                // Load recent links
+                loadRecentLinks();
+                
+            } catch (error) {
+                console.error("Error saving to Firebase:", error);
+                errorElement.textContent = "An error occurred. Please try again.";
+                errorElement.classList.remove('hidden');
+            }
+        });
+        
+        // Load recent links
+        async function loadRecentLinks() {
+            try {
+                const snapshot = await database.ref('links').orderByChild('createdAt').limitToLast(5).once('value');
+                const linksContainer = document.getElementById('recentLinks');
+                linksContainer.innerHTML = '';
+                
+                if (!snapshot.exists()) {
+                    linksContainer.innerHTML = '<p class="text-gray-500">No recent links found</p>';
+                    return;
+                }
+                
+                const links = [];
+                snapshot.forEach(childSnapshot => {
+                    links.push({
+                        slug: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                
+                // Sort by date (newest first)
+                links.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                // Display links
+                links.forEach(link => {
+                    const linkElement = document.createElement('div');
+                    linkElement.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg';
+                    linkElement.innerHTML = `
+                        <div>
+                            <a href="https://linkshort.vercel.app/${link.slug}" target="_blank" class="font-medium text-indigo-600 hover:text-indigo-800">linkshort.vercel.app/${link.slug}</a>
+                            <div class="text-xs text-gray-500">${formatDate(link.createdAt)} • ${link.viewCount || 0} views</div>
+                        </div>
+                        <button class="text-gray-400 hover:text-gray-600 copy-recent" data-url="https://linkshort.vercel.app/${link.slug}">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                            </svg>
+                        </button>
+                    `;
+                    linksContainer.appendChild(linkElement);
+                });
+                
+                // Add event listeners to copy buttons
+                document.querySelectorAll('.copy-recent').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const url = this.getAttribute('data-url');
+                        navigator.clipboard.writeText(url).then(() => {
+                            const originalInnerHTML = this.innerHTML;
+                            this.innerHTML = `
+                                <svg class="h-5 w-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            `;
+                            setTimeout(() => {
+                                this.innerHTML = originalInnerHTML;
+                            }, 2000);
+                        });
+                    });
+                });
+                
+            } catch (error) {
+                console.error("Error loading recent links:", error);
+            }
+        }
+        
+        // Copy button
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const shortUrl = document.getElementById('shortUrl').textContent;
+            navigator.clipboard.writeText(shortUrl).then(() => {
+                const originalText = this.textContent;
+                this.textContent = "Copied!";
+                this.classList.add('bg-indigo-100', 'text-indigo-700');
+                
+                setTimeout(() => {
+                    this.textContent = originalText;
+                    this.classList.remove('bg-indigo-100', 'text-indigo-700');
+                }, 2000);
+            });
+        });
+        
+        // Share button
+        document.getElementById('shareBtn').addEventListener('click', function() {
+            const shortUrl = document.getElementById('shortUrl').textContent;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'My shortened link',
+                    text: 'Check out this link I shortened:',
+                    url: shortUrl
+                }).catch(err => {
+                    console.log('Error sharing:', err);
+                });
+            } else {
+                // Fallback for browsers that don't support Web Share API
+                navigator.clipboard.writeText(shortUrl).then(() => {
+                    alert('Link copied to clipboard. You can now share it.');
+                });
+            }
+        });
+        
+        // QR Code button
+        document.getElementById('qrBtn').addEventListener('click', function() {
+            const shortUrl = document.getElementById('shortUrl').textContent;
+            
+            // Generate QR code (using an external library would be better in production)
+            document.getElementById('qrCode').innerHTML = `
+                <svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="200" height="200" fill="white"/>
+                    <rect x="20" y="20" width="40" height="40" fill="black"/>
+                    <rect x="80" y="20" width="20" height="20" fill="black"/>
+                    <!-- More QR code patterns would go here in a real implementation -->
+                    <text x="100" y="190" text-anchor="middle" font-size="10" fill="#4f46e5">${shortUrl}</text>
+                </svg>
+            `;
+            
+            document.getElementById('qrModal').classList.remove('hidden');
+        });
+        
+        // Close QR modal
+        document.getElementById('closeQrModal').addEventListener('click', function() {
+            document.getElementById('qrModal').classList.add('hidden');
+        });
+        
+        // Load recent links on page load
+        document.addEventListener('DOMContentLoaded', loadRecentLinks);
+    </script>
+</body>
+</html>
