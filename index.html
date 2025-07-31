@@ -3,58 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkShort | Secure URL Shortener</title>
+    <title>LinkShort | Free URL Shortener</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f5f7fa;
-            min-height: 100vh;
-        }
-        .progress-ring__circle {
-            transition: stroke-dashoffset 0.35s;
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
-        }
-        .link-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .link-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        .elevation-1 {
-            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-        }
-        .elevation-2 {
-            box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-        }
-        .text-primary {
-            color: #4f46e5;
-        }
-        .bg-primary {
-            background-color: #4f46e5;
-        }
-        .border-primary {
-            border-color: #4f46e5;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f7fafc;
         }
         .toast {
             position: fixed;
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: #333;
+            background-color: #1a365d;
             color: white;
             padding: 12px 24px;
-            border-radius: 4px;
+            border-radius: 8px;
             z-index: 1000;
             opacity: 0;
-            transition: opacity 0.3s ease-in-out;
+            transition: opacity 0.3s;
         }
         .toast.show {
             opacity: 1;
@@ -73,33 +42,18 @@
         }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
-    <!-- Firebase Config -->
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAGntp_9Moqk54aWDIuqdR2uv-G3IhUXxU",
-            authDomain: "link-shortner-project-fc9dc.firebaseapp.com",
-            databaseURL: "https://link-shortner-project-fc9dc-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "link-shortner-project-fc9dc",
-            storageBucket: "link-shortner-project-fc9dc.appspot.com",
-            messagingSenderId: "333006092673",
-            appId: "1:333006092673:web:ed5927494b158703ad1080"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-    </script>
-
+<body class="min-h-screen bg-gray-50">
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
     <!-- Header -->
-    <header class="bg-white shadow-sm py-4 px-6 sticky top-0 z-10">
-        <div class="flex justify-between items-center max-w-6xl mx-auto">
+    <header class="bg-white shadow-sm py-3 px-4 sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-2">
-                <span class="material-icons text-primary">insert_link</span>
-                <h1 class="text-xl font-bold text-primary">LinkShort</h1>
+                <span class="material-icons text-blue-600">insert_link</span>
+                <h1 class="text-xl font-bold text-blue-600">LinkShort</h1>
             </div>
-            <button id="newLinkBtn" class="flex items-center space-x-1 bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+            <button id="newLinkBtn" class="flex items-center space-x-1 bg-blue-600 text-white px-3 py-1.5 rounded-md text-sm hover:bg-blue-700 transition">
                 <span class="material-icons text-sm">add</span>
                 <span>New Link</span>
             </button>
@@ -107,98 +61,74 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1">
+    <main class="max-w-4xl mx-auto py-6 px-4">
         <!-- URL Shortener Section -->
-        <section id="shortenerSection" class="p-6 max-w-md mx-auto">
-            <div class="bg-white rounded-xl p-6 shadow-sm">
-                <h2 class="text-lg font-semibold mb-4">Create Short Link</h2>
-                <div class="space-y-4">
-                    <div>
-                        <label for="originalUrl" class="block text-sm font-medium text-gray-700 mb-1">Destination URL</label>
-                        <input type="url" id="originalUrl" placeholder="https://example.com" 
-                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none" required>
-                        <p id="urlError" class="mt-1 text-sm text-red-600 hidden">Please enter a valid URL</p>
+        <section id="shortenerSection" class="bg-white rounded-lg shadow-sm p-5 mb-6">
+            <h2 class="text-lg font-semibold mb-4 text-gray-800">Create Short Link</h2>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Destination URL</label>
+                    <input type="url" id="originalUrl" placeholder="https://example.com" 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <p id="urlError" class="mt-1 text-sm text-red-600 hidden"></p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Custom Alias (optional)</label>
+                    <div class="flex">
+                        <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 rounded-l-md text-gray-600 text-sm">${window.location.hostname}/?u=</span>
+                        <input type="text" id="customSlug" placeholder="myalias" 
+                            class="flex-1 px-3 py-2 border rounded-r-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
-                    <div>
-                        <label for="customSlug" class="block text-sm font-medium text-gray-700 mb-1">Custom Alias (optional)</label>
-                        <div class="flex">
-                            <span class="inline-flex items-center px-3 bg-gray-100 border border-r-0 rounded-l-lg text-gray-600 text-sm">linkshort.com/</span>
-                            <input type="text" id="customSlug" placeholder="my-alias" 
-                                class="flex-1 px-4 py-2 border rounded-r-lg focus:ring-2 focus:ring-primary focus:border-primary focus:outline-none" 
-                                pattern="[a-zA-Z0-9_-]+" maxlength="30">
-                        </div>
-                        <p id="slugError" class="mt-1 text-sm text-red-600 hidden">Alias can only contain letters, numbers, hyphens and underscores</p>
-                    </div>
-                    <button id="shortenBtn" class="w-full bg-primary text-white py-2 rounded-lg hover:bg-opacity-90 transition flex justify-center items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                        <span id="shortenText">Shorten URL</span>
-                        <span id="shortenSpinner" class="loading-spinner hidden"></span>
-                    </button>
+                    <p id="slugError" class="mt-1 text-sm text-red-600 hidden"></p>
                 </div>
-            </div>
-
-            <!-- Result Section -->
-            <div id="resultSection" class="hidden bg-white rounded-xl p-6 mt-4 shadow-sm">
-                <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-semibold">Your Short Link</h3>
-                    <div class="flex items-center space-x-1 text-sm text-gray-500">
-                        <span class="material-icons text-sm">visibility</span>
-                        <span id="viewCount">0</span>
-                        <span>views</span>
-                    </div>
-                </div>
-                <div class="flex items-center space-x-2 mb-4">
-                    <input type="text" id="shortUrl" readonly 
-                        class="flex-1 px-4 py-2 border rounded-lg bg-gray-50 focus:outline-none">
-                    <button id="copyBtn" class="p-2 rounded-lg hover:bg-gray-100 transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                        <span class="material-icons">content_copy</span>
-                    </button>
-                </div>
-                <div class="flex space-x-2">
-                    <button id="shareBtn" class="flex-1 flex items-center justify-center space-x-1 bg-gray-100 hover:bg-gray-200 py-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                        <span class="material-icons text-sm">share</span>
-                        <span>Share</span>
-                    </button>
-                    <button id="qrBtn" class="flex-1 flex items-center justify-center space-x-1 bg-gray-100 hover:bg-gray-200 py-2 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                        <span class="material-icons text-sm">qr_code</span>
-                        <span>QR Code</span>
-                    </button>
-                </div>
-                <div class="mt-4 text-xs text-gray-500">
-                    Created: <span id="createdAt">just now</span>
-                </div>
+                <button id="shortenBtn" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition flex justify-center items-center space-x-2">
+                    <span id="shortenText">Shorten URL</span>
+                    <span id="shortenSpinner" class="loading-spinner hidden"></span>
+                </button>
             </div>
         </section>
 
-        <!-- Blog/Links Section -->
-        <section id="contentSection" class="p-6 max-w-3xl mx-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-lg font-semibold">Recent Links</h2>
-                <button id="refreshBtn" class="text-primary hover:text-primary-dark flex items-center space-x-1">
+        <!-- Result Section -->
+        <div id="resultSection" class="hidden bg-white rounded-lg shadow-sm p-5 mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-semibold text-gray-800">Your Short Link</h3>
+                <div class="flex items-center space-x-1 text-sm text-gray-500">
+                    <span class="material-icons text-sm">visibility</span>
+                    <span id="viewCount">0</span>
+                    <span>views</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 mb-3">
+                <input type="text" id="shortUrl" readonly 
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                <button id="copyBtn" class="p-2 rounded-md hover:bg-gray-100 transition">
+                    <span class="material-icons text-gray-700">content_copy</span>
+                </button>
+            </div>
+            <div class="flex space-x-2">
+                <button id="qrBtn" class="flex-1 flex items-center justify-center space-x-1 bg-gray-100 hover:bg-gray-200 py-2 rounded-md transition text-sm">
+                    <span class="material-icons text-sm">qr_code</span>
+                    <span>QR Code</span>
+                </button>
+            </div>
+            <div class="mt-3 text-xs text-gray-500">
+                Created: <span id="createdAt">just now</span>
+            </div>
+        </div>
+
+        <!-- Links Section -->
+        <section id="contentSection">
+            <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-semibold text-gray-800">Your Links</h2>
+                <button id="refreshBtn" class="text-blue-600 hover:text-blue-800 flex items-center space-x-1 text-sm">
                     <span class="material-icons text-sm">refresh</span>
                     <span>Refresh</span>
                 </button>
             </div>
-            <div id="contentList" class="space-y-4">
-                <!-- Skeleton loading -->
-                <div class="bg-white rounded-xl p-4 shadow-sm">
-                    <div class="animate-pulse flex space-x-4">
-                        <div class="rounded-full bg-gray-200 h-10 w-10"></div>
-                        <div class="flex-1 space-y-2">
-                            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                            <div class="h-3 bg-gray-200 rounded"></div>
-                            <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-xl p-4 shadow-sm">
-                    <div class="animate-pulse flex space-x-4">
-                        <div class="rounded-full bg-gray-200 h-10 w-10"></div>
-                        <div class="flex-1 space-y-2">
-                            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                            <div class="h-3 bg-gray-200 rounded"></div>
-                            <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-                        </div>
-                    </div>
+            <div id="contentList" class="space-y-3">
+                <!-- Links will be loaded here -->
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                    <p class="text-gray-500 text-center">No links created yet</p>
                 </div>
             </div>
         </section>
@@ -206,51 +136,71 @@
 
     <!-- QR Code Modal -->
     <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-        <div class="bg-white rounded-xl p-6 max-w-xs w-full shadow-md">
-            <div class="flex justify-between items-center mb-4">
+        <div class="bg-white rounded-lg p-5 max-w-xs w-full shadow-lg">
+            <div class="flex justify-between items-center mb-3">
                 <h3 class="text-lg font-semibold">QR Code</h3>
-                <button id="closeQrModal" class="text-gray-500 hover:text-gray-700 focus:outline-none">
+                <button id="closeQrModal" class="text-gray-500 hover:text-gray-700">
                     <span class="material-icons">close</span>
                 </button>
             </div>
-            <div id="qrCode" class="flex justify-center mb-4"></div>
-            <p class="text-center text-sm text-gray-600">Scan to visit the link</p>
-            <div class="mt-4 flex justify-center">
-                <button id="downloadQrBtn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
-                    Download QR Code
-                </button>
-            </div>
+            <div id="qrCode" class="flex justify-center mb-3"></div>
+            <p class="text-center text-sm text-gray-600 mb-3">Scan to visit the link</p>
+            <button id="downloadQrBtn" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition">
+                Download QR Code
+            </button>
         </div>
     </div>
 
     <script>
         // DOM Elements
-        const shortenerSection = document.getElementById('shortenerSection');
-        const resultSection = document.getElementById('resultSection');
-        const contentSection = document.getElementById('contentSection');
-        const contentList = document.getElementById('contentList');
-        const newLinkBtn = document.getElementById('newLinkBtn');
+        const toast = document.getElementById('toast');
+        const originalUrlInput = document.getElementById('originalUrl');
+        const customSlugInput = document.getElementById('customSlug');
         const shortenBtn = document.getElementById('shortenBtn');
         const shortenText = document.getElementById('shortenText');
         const shortenSpinner = document.getElementById('shortenSpinner');
-        const originalUrlInput = document.getElementById('originalUrl');
-        const customSlugInput = document.getElementById('customSlug');
+        const resultSection = document.getElementById('resultSection');
         const shortUrlElement = document.getElementById('shortUrl');
         const viewCountElement = document.getElementById('viewCount');
         const createdAtElement = document.getElementById('createdAt');
         const copyBtn = document.getElementById('copyBtn');
-        const shareBtn = document.getElementById('shareBtn');
         const qrBtn = document.getElementById('qrBtn');
         const qrModal = document.getElementById('qrModal');
         const closeQrModal = document.getElementById('closeQrModal');
         const qrCodeElement = document.getElementById('qrCode');
         const downloadQrBtn = document.getElementById('downloadQrBtn');
+        const newLinkBtn = document.getElementById('newLinkBtn');
         const refreshBtn = document.getElementById('refreshBtn');
+        const contentList = document.getElementById('contentList');
         const urlError = document.getElementById('urlError');
         const slugError = document.getElementById('slugError');
-        const toast = document.getElementById('toast');
 
-        // Show toast notification
+        // LocalStorage-based database simulation
+        const db = {
+            getLinks: () => {
+                const links = localStorage.getItem('linkshort_links');
+                return links ? JSON.parse(links) : {};
+            },
+            saveLink: (slug, data) => {
+                const links = db.getLinks();
+                links[slug] = data;
+                localStorage.setItem('linkshort_links', JSON.stringify(links));
+                return true;
+            },
+            getLink: (slug) => {
+                const links = db.getLinks();
+                return links[slug] || null;
+            },
+            incrementView: (slug) => {
+                const links = db.getLinks();
+                if (links[slug]) {
+                    links[slug].viewCount = (links[slug].viewCount || 0) + 1;
+                    localStorage.setItem('linkshort_links', JSON.stringify(links));
+                }
+            }
+        };
+
+        // Show toast message
         function showToast(message, duration = 3000) {
             toast.textContent = message;
             toast.classList.add('show');
@@ -259,14 +209,9 @@
             }, duration);
         }
 
-        // Generate random short code
-        function generateShortCode() {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            let result = '';
-            for (let i = 0; i < 6; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
+        // Generate random slug
+        function generateSlug() {
+            return Math.random().toString(36).substring(2, 8);
         }
 
         // Format date
@@ -278,13 +223,7 @@
             if (seconds < 60) return 'just now';
             if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
             if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
-            return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-
-        // Check if slug is available
-        async function isSlugAvailable(slug) {
-            const snapshot = await database.ref('links/' + slug).once('value');
-            return !snapshot.exists();
+            return new Date(date).toLocaleDateString();
         }
 
         // Validate URL
@@ -292,20 +231,20 @@
             try {
                 new URL(url);
                 return true;
-            } catch (e) {
+            } catch {
                 return false;
             }
         }
 
         // Validate slug
         function isValidSlug(slug) {
-            return /^[a-zA-Z0-9_-]+$/.test(slug);
+            return /^[a-z0-9_-]+$/i.test(slug);
         }
 
-        // Create new link
+        // Create short link
         async function createShortLink() {
             const originalUrl = originalUrlInput.value.trim();
-            const customSlug = customSlugInput.value.trim();
+            let customSlug = customSlugInput.value.trim();
             
             // Validate URL
             if (!originalUrl) {
@@ -316,7 +255,7 @@
             }
             
             if (!isValidUrl(originalUrl)) {
-                urlError.textContent = 'Please enter a valid URL';
+                urlError.textContent = 'Please enter a valid URL (include http:// or https://)';
                 urlError.classList.remove('hidden');
                 originalUrlInput.focus();
                 return;
@@ -327,55 +266,43 @@
             // Validate custom slug if provided
             if (customSlug) {
                 if (!isValidSlug(customSlug)) {
+                    slugError.textContent = 'Only letters, numbers, hyphens and underscores allowed';
+                    slugError.classList.remove('hidden');
+                    customSlugInput.focus();
+                    return;
+                }
+                
+                // Check if slug exists
+                if (db.getLink(customSlug)) {
+                    slugError.textContent = 'This alias is already taken';
                     slugError.classList.remove('hidden');
                     customSlugInput.focus();
                     return;
                 }
                 
                 slugError.classList.add('hidden');
+            } else {
+                customSlug = generateSlug();
             }
             
-            // Show loading state
+            // Show loading
             shortenText.classList.add('hidden');
             shortenSpinner.classList.remove('hidden');
             shortenBtn.disabled = true;
             
-            let slug;
-            if (customSlug) {
-                if (!await isSlugAvailable(customSlug)) {
-                    showToast('This alias is already taken');
-                    slugError.textContent = 'This alias is already taken';
-                    slugError.classList.remove('hidden');
-                    shortenText.classList.remove('hidden');
-                    shortenSpinner.classList.add('hidden');
-                    shortenBtn.disabled = false;
-                    return;
-                }
-                
-                slug = customSlug;
-            } else {
-                slug = generateShortCode();
-            }
-            
+            // Create link data
             const createdAt = new Date().toISOString();
-            const shortUrl = `${window.location.origin}/?${slug}`;
+            const shortUrl = `${window.location.origin}${window.location.pathname}?u=${customSlug}`;
             
-            try {
-                await database.ref('links/' + slug).set({
-                    originalUrl: originalUrl,
-                    createdAt: createdAt,
-                    viewCount: 0,
-                    isActive: true
-                });
-                
-                await database.ref('posts/' + slug).set({
-                    title: `Link: ${slug}`,
-                    content: `Shortened link to ${originalUrl}`,
-                    createdAt: createdAt,
-                    type: 'link'
-                });
-                
-                // Update UI
+            // Save to database
+            const success = db.saveLink(customSlug, {
+                originalUrl: originalUrl,
+                createdAt: createdAt,
+                viewCount: 0
+            });
+            
+            if (success) {
+                // Show result
                 shortUrlElement.value = shortUrl;
                 viewCountElement.textContent = '0';
                 createdAtElement.textContent = formatDate(createdAt);
@@ -386,163 +313,104 @@
                     width: 200,
                     margin: 2,
                     color: {
-                        dark: '#4f46e5',
+                        dark: '#2563eb',
                         light: '#ffffff'
                     }
                 });
                 
-                // Show success message
                 showToast('Link created successfully!');
-                
-                // Load content
-                await loadContent();
+                loadLinks();
                 
                 // Scroll to result
-                resultSection.scrollIntoView({ behavior: 'smooth' });
-                
-            } catch (error) {
-                console.error("Error saving to Firebase:", error);
-                showToast("An error occurred. Please try again.");
-            } finally {
-                // Reset loading state
-                shortenText.classList.remove('hidden');
-                shortenSpinner.classList.add('hidden');
-                shortenBtn.disabled = false;
+                setTimeout(() => {
+                    resultSection.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            } else {
+                showToast('Failed to create link. Please try again.');
             }
+            
+            // Reset loading
+            shortenText.classList.remove('hidden');
+            shortenSpinner.classList.add('hidden');
+            shortenBtn.disabled = false;
         }
 
-        // Load blog posts and links
-        async function loadContent() {
-            try {
+        // Load user's links
+        function loadLinks() {
+            const links = db.getLinks();
+            const linksArray = Object.keys(links).map(slug => ({
+                slug,
+                ...links[slug]
+            }));
+            
+            // Sort by date (newest first)
+            linksArray.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            if (linksArray.length === 0) {
                 contentList.innerHTML = `
-                    <div class="bg-white rounded-xl p-4 shadow-sm">
-                        <div class="animate-pulse flex space-x-4">
-                            <div class="rounded-full bg-gray-200 h-10 w-10"></div>
-                            <div class="flex-1 space-y-2">
-                                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                                <div class="h-3 bg-gray-200 rounded"></div>
-                                <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-xl p-4 shadow-sm">
-                        <div class="animate-pulse flex space-x-4">
-                            <div class="rounded-full bg-gray-200 h-10 w-10"></div>
-                            <div class="flex-1 space-y-2">
-                                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-                                <div class="h-3 bg-gray-200 rounded"></div>
-                                <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-                            </div>
-                        </div>
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <p class="text-gray-500 text-center">No links created yet</p>
                     </div>
                 `;
-                
-                const snapshot = await database.ref('links').orderByChild('createdAt').limitToLast(5).once('value');
-                
-                contentList.innerHTML = '';
-                
-                if (!snapshot.exists()) {
-                    contentList.innerHTML = `
-                        <div class="bg-white rounded-xl p-6 shadow-sm text-center">
-                            <span class="material-icons text-gray-400 text-4xl mb-2">link_off</span>
-                            <h3 class="text-gray-500">No links created yet</h3>
-                            <p class="text-sm text-gray-400 mt-1">Create your first short link to get started</p>
+                return;
+            }
+            
+            contentList.innerHTML = '';
+            
+            linksArray.forEach(link => {
+                const linkElement = document.createElement('div');
+                linkElement.className = 'bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition';
+                linkElement.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 truncate">${link.originalUrl}</p>
+                            <p class="text-xs text-blue-600 mt-1 truncate">${window.location.hostname}${window.location.pathname}?u=${link.slug}</p>
+                            <div class="flex items-center mt-2 text-xs text-gray-500">
+                                <span>${link.viewCount || 0} views</span>
+                                <span class="mx-1">•</span>
+                                <span>${formatDate(link.createdAt)}</span>
+                            </div>
                         </div>
-                    `;
-                    return;
-                }
-                
-                const links = [];
-                snapshot.forEach(childSnapshot => {
-                    links.push({
-                        id: childSnapshot.key,
-                        ...childSnapshot.val()
-                    });
-                });
-                
-                // Sort by date (newest first)
-                links.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                
-                // Display content
-                links.forEach(item => {
-                    const contentElement = document.createElement('div');
-                    contentElement.className = 'bg-white rounded-xl p-4 shadow-sm link-card hover:shadow-md';
-                    
-                    contentElement.innerHTML = `
-                        <div class="flex items-start space-x-3">
-                            <div class="bg-primary bg-opacity-10 p-2 rounded-lg">
-                                <span class="material-icons text-primary">insert_link</span>
-                            </div>
-                            <div class="flex-1">
-                                <h3 class="font-medium">${item.id}</h3>
-                                <p class="text-sm text-gray-600 truncate">${item.originalUrl}</p>
-                                <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                                    <span>${item.viewCount || 0} views</span>
-                                    <span>•</span>
-                                    <span>${formatDate(item.createdAt)}</span>
-                                </div>
-                            </div>
-                            <a href="/?${item.id}" target="_blank" class="text-primary hover:text-primary-dark" aria-label="Open link">
-                                <span class="material-icons">open_in_new</span>
+                        <div class="flex space-x-1 ml-2">
+                            <button class="copy-link p-1 text-gray-500 hover:text-blue-600" data-url="${window.location.hostname}${window.location.pathname}?u=${link.slug}">
+                                <span class="material-icons text-sm">content_copy</span>
+                            </button>
+                            <a href="?u=${link.slug}" target="_blank" class="p-1 text-gray-500 hover:text-blue-600">
+                                <span class="material-icons text-sm">open_in_new</span>
                             </a>
                         </div>
-                    `;
-                    
-                    contentList.appendChild(contentElement);
-                });
-                
-            } catch (error) {
-                console.error("Error loading content:", error);
-                showToast("Error loading links. Please try again.");
-                contentList.innerHTML = `
-                    <div class="bg-white rounded-xl p-6 shadow-sm text-center">
-                        <span class="material-icons text-gray-400 text-4xl mb-2">error</span>
-                        <h3 class="text-gray-500">Failed to load links</h3>
-                        <p class="text-sm text-gray-400 mt-1">Please try refreshing the page</p>
                     </div>
                 `;
-            }
+                contentList.appendChild(linkElement);
+            });
+            
+            // Add copy event listeners
+            document.querySelectorAll('.copy-link').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(btn.getAttribute('data-url'));
+                    showToast('Link copied to clipboard!');
+                });
+            });
         }
 
-        // Process URL slug if present
-        function checkForSlug() {
+        // Check for redirect
+        function checkForRedirect() {
             const params = new URLSearchParams(window.location.search);
-            const slug = params.toString();
+            const slug = params.get('u');
             
             if (slug) {
-                processSlug(slug);
-            } else {
-                // Normal view - show content
-                shortenerSection.classList.remove('hidden');
-                contentSection.classList.remove('hidden');
-                loadContent();
-            }
-        }
-
-        // Process slug redirect
-        async function processSlug(slug) {
-            try {
-                const snapshot = await database.ref('links/' + slug).once('value');
-                const linkData = snapshot.val();
-                
-                if (!linkData || !linkData.originalUrl || !linkData.isActive) {
-                    throw new Error('Link not found or expired');
+                const link = db.getLink(slug);
+                if (link && link.originalUrl) {
+                    // Increment view count
+                    db.incrementView(slug);
+                    
+                    // Redirect
+                    window.location.href = link.originalUrl;
+                } else {
+                    // Invalid link, show main page
+                    showToast('Invalid or expired link');
+                    window.history.replaceState({}, document.title, window.location.pathname);
                 }
-                
-                // Update view count
-                const newViewCount = (linkData.viewCount || 0) + 1;
-                await database.ref('links/' + slug).update({ viewCount: newViewCount });
-                
-                // Redirect
-                window.location.href = linkData.originalUrl;
-                
-            } catch (error) {
-                console.error('Error processing link:', error);
-                // Show normal view if link is invalid
-                shortenerSection.classList.remove('hidden');
-                contentSection.classList.remove('hidden');
-                loadContent();
-                showToast('Link not found or expired');
             }
         }
 
@@ -552,8 +420,8 @@
             if (!canvas) return;
             
             const link = document.createElement('a');
-            link.download = 'linkshort-qr.png';
-            link.href = canvas.toDataURL('image/png');
+            link.download = `linkshort-${new Date().getTime()}.png`;
+            link.href = canvas.toDataURL();
             link.click();
         }
 
@@ -566,29 +434,12 @@
             resultSection.classList.add('hidden');
             urlError.classList.add('hidden');
             slugError.classList.add('hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
             originalUrlInput.focus();
         });
         
         copyBtn.addEventListener('click', () => {
             navigator.clipboard.writeText(shortUrlElement.value);
             showToast('Link copied to clipboard!');
-        });
-        
-        shareBtn.addEventListener('click', () => {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'My shortened link',
-                    text: 'Check out this link I shortened:',
-                    url: shortUrlElement.value
-                }).catch(err => {
-                    console.log('Error sharing:', err);
-                    showToast('Error sharing link');
-                });
-            } else {
-                navigator.clipboard.writeText(shortUrlElement.value);
-                showToast('Link copied to clipboard!');
-            }
         });
         
         qrBtn.addEventListener('click', () => {
@@ -604,11 +455,11 @@
         downloadQrBtn.addEventListener('click', downloadQRCode);
         
         refreshBtn.addEventListener('click', () => {
-            loadContent();
-            showToast('Refreshing links...');
+            loadLinks();
+            showToast('Links refreshed');
         });
         
-        // Handle Enter key in inputs
+        // Handle Enter key
         originalUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') createShortLink();
         });
@@ -618,7 +469,10 @@
         });
 
         // Initialize
-        document.addEventListener('DOMContentLoaded', checkForSlug);
+        document.addEventListener('DOMContentLoaded', () => {
+            checkForRedirect();
+            loadLinks();
+        });
     </script>
 </body>
 </html>
