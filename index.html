@@ -3,8 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔗 QuickHop | Instant URL Shortener</title>
-    <meta name="description" content="The fastest way to shorten links and track clicks in real-time. Perfect for marketers and content creators.">
+    <title>⚡ QuickHop | Instant URL Shortener</title>
+    <meta name="description" content="Transform long links into short, memorable URLs instantly. Perfect for sharing anywhere.">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" as="style">
+    <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
     
     <!-- Material Design & Fonts -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
@@ -15,7 +19,6 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     
     <style>
         :root {
@@ -39,21 +42,27 @@
             overflow-x: hidden;
         }
         
-        /* Loading Animation */
+        /* Cognitive Load Reduction */
+        .focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+        
+        /* Loading Animation - Uses smooth ease-in-out for better perception */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
         
         .animate-fadein {
-            animation: fadeIn 0.6s ease-out forwards;
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
         
-        /* Progress Loader */
+        /* Progress Loader - More visible progress indication */
         .progress-loader {
             width: 100%;
-            height: 4px;
-            background-color: rgba(79, 70, 229, 0.2);
+            height: 3px;
+            background-color: rgba(79, 70, 229, 0.1);
             position: fixed;
             top: 0;
             left: 0;
@@ -64,37 +73,73 @@
         .progress-bar {
             height: 100%;
             width: 0;
-            background-color: var(--primary);
-            transition: width 0.4s ease;
+            background: linear-gradient(90deg, var(--primary), #8b5cf6);
+            transition: width 0.6s cubic-bezier(0.65, 0, 0.35, 1);
         }
         
-        /* Button States */
+        /* Button States - Enhanced feedback */
         .btn-primary {
             background-color: var(--primary);
             color: var(--on-primary);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            position: relative;
+            overflow: hidden;
         }
         
         .btn-primary:hover {
             background-color: var(--primary-dark);
             transform: translateY(-1px);
-            box-shadow: var(--elevation-2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
         
         .btn-primary:active {
             transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         }
         
-        /* Psychological Triggers */
-        .urgency-badge {
-            background-color: #ef4444;
-            animation: pulse 2s infinite;
+        .btn-primary::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.5);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+        .btn-primary:focus:not(:active)::after {
+            animation: ripple 0.6s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
+        }
+        
+        /* Initial loading spinner */
+        .init-loader {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(79, 70, 229, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
         /* Mobile First Adjustments */
@@ -128,64 +173,78 @@
         const database = firebase.database();
     </script>
 
+    <!-- Initial Loader - Shows while checking for redirect -->
+    <div id="initialLoader" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+        <div class="init-loader"></div>
+        <p class="mt-4 text-gray-600">Preparing your experience...</p>
+    </div>
+
     <!-- Global Loading Indicator -->
     <div id="globalLoader" class="progress-loader">
         <div id="globalProgress" class="progress-bar"></div>
     </div>
 
-    <!-- Redirect Landing Page -->
+    <!-- Redirect Landing Page - Enhanced with psychological triggers -->
     <div id="redirectPage" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center px-4 hidden">
         <div class="max-w-md w-full animate-fadein">
             <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
-                    <span class="material-icons-round text-indigo-600 text-3xl">rocket_launch</span>
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-indigo-100 rounded-full mb-4 animate-pulse">
+                    <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
                 </div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">🚀 Taking You There!</h1>
-                <p class="text-gray-600">You're being redirected to your destination</p>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">⚡ Almost There!</h1>
+                <p class="text-gray-600">Your destination is loading securely</p>
             </div>
             
-            <!-- Marketing Banner -->
+            <!-- Value Proposition Banner - Uses social proof -->
             <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-6">
                 <div class="flex items-start">
-                    <div class="flex-shrink-0">
-                        <span class="material-icons-round text-indigo-600">bolt</span>
+                    <div class="flex-shrink-0 pt-0.5">
+                        <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
                     </div>
                     <div class="ml-3">
-                        <h3 class="text-sm font-medium text-indigo-800">Powered by QuickHop</h3>
-                        <p class="text-xs text-indigo-600 mt-1">The world's fastest URL shortener with real-time analytics.</p>
+                        <h3 class="text-sm font-medium text-indigo-800">Trusted by thousands</h3>
+                        <p class="text-xs text-indigo-600 mt-1">QuickHop ensures fast, secure redirection for all your links.</p>
                         <a href="/" class="text-xs font-medium text-indigo-600 hover:text-indigo-500 inline-flex items-center mt-1">
-                            Try it free <span class="material-icons-round text-xs ml-1">arrow_forward</span>
+                            Create your own <span class="material-icons-round text-xs ml-1">arrow_forward</span>
                         </a>
                     </div>
                 </div>
             </div>
             
+            <!-- Countdown - Creates urgency -->
             <div class="mb-6">
                 <div class="flex justify-between text-sm text-gray-500 mb-1">
-                    <span>Redirecting in...</span>
-                    <span id="countdown">10s</span>
+                    <span>Loading destination...</span>
+                    <span id="countdown" class="font-medium">10s</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div id="progressBar" class="bg-indigo-600 h-2 rounded-full" style="width: 100%"></div>
+                <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-1000 ease-linear" style="width: 100%"></div>
                 </div>
             </div>
             
-            <button id="skipBtn" class="w-full btn-primary font-medium py-3 px-4 rounded-lg flex items-center justify-center">
+            <!-- Skip Button - Uses Fitts's Law for larger target -->
+            <button id="skipBtn" class="w-full btn-primary font-medium py-3 px-4 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Skip Waiting <span class="material-icons-round ml-2">double_arrow</span>
             </button>
         </div>
     </div>
 
     <!-- Main App -->
-    <div id="appContainer">
-        <!-- Header -->
+    <div id="appContainer" class="hidden">
+        <!-- Header - Sticky for easy access -->
         <header class="bg-white shadow-sm py-4 px-6 sticky top-0 z-40">
             <div class="max-w-6xl mx-auto flex justify-between items-center">
                 <div class="flex items-center space-x-2">
-                    <span class="material-icons-round text-indigo-600 text-2xl">bolt</span>
+                    <svg class="w-6 h-6 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                    </svg>
                     <span class="text-xl font-bold text-indigo-600">QuickHop</span>
                 </div>
-                <button id="newLinkBtn" class="btn-primary font-medium py-2 px-4 rounded-lg flex items-center space-x-1">
+                <button id="newLinkBtn" class="btn-primary font-medium py-2 px-4 rounded-lg flex items-center space-x-1 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                     <span class="material-icons-round text-sm">add</span>
                     <span>New Link</span>
                 </button>
@@ -194,44 +253,57 @@
 
         <!-- Main Content -->
         <main class="max-w-6xl mx-auto py-8 px-6">
-            <!-- Shortener Section -->
+            <!-- Shortener Section - Clear CTA -->
             <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
                 <h2 class="text-xl font-semibold text-gray-900 mb-6">Create Your Short Link</h2>
                 
                 <div class="space-y-5">
-                    <!-- URL Input -->
+                    <!-- URL Input - Clear labeling -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">🔗 Destination URL</label>
+                        <label for="originalUrl" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                            <svg class="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                            </svg>
+                            Destination URL
+                        </label>
                         <div class="mt-1 relative rounded-md shadow-sm">
                             <input type="url" id="originalUrl" placeholder="https://yourlongurl.com/example" 
-                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" required>
+                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none" 
+                                   required aria-describedby="urlError">
                         </div>
                         <p id="urlError" class="mt-1 text-sm text-red-600 hidden"></p>
                     </div>
                     
-                    <!-- Custom Alias -->
+                    <!-- Custom Alias - Optional but enticing -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">✨ Custom Alias (optional)</label>
+                        <label for="customSlug" class="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                            <svg class="w-4 h-4 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            Custom Alias (optional)
+                        </label>
                         <div class="mt-1 flex rounded-md shadow-sm">
-                            <span id="domainPrefix" class="inline-flex items-center px-4 bg-gray-50 text-gray-500 border border-r-0 rounded-l-md">
+                            <span id="domainPrefix" class="inline-flex items-center px-4 bg-gray-50 text-gray-500 border border-r-0 border-gray-300 rounded-l-md text-sm">
                                 quickhop.com/?u=
                             </span>
                             <input type="text" id="customSlug" placeholder="my-alias" 
-                                   class="flex-1 min-w-0 block w-full px-4 py-3 border rounded-r-md focus:ring-indigo-500 focus:border-indigo-500">
+                                   class="flex-1 min-w-0 block w-full px-4 py-3 border border-gray-300 rounded-r-md focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none" 
+                                   aria-describedby="slugError">
                         </div>
                         <p id="slugError" class="mt-1 text-sm text-red-600 hidden"></p>
                     </div>
                     
-                    <!-- Privacy Toggle -->
+                    <!-- Privacy Toggle - Default private for user control -->
                     <div class="flex items-center">
-                        <input type="checkbox" id="publicToggle" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <input type="checkbox" id="publicToggle" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded focus:outline-none">
                         <label for="publicToggle" class="ml-2 block text-sm text-gray-700">
-                            Show in public list
+                            Show in public directory
                         </label>
                     </div>
                     
-                    <!-- CTA Button -->
-                    <button id="shortenBtn" class="w-full btn-primary font-medium py-3 px-4 rounded-lg flex items-center justify-center">
+                    <!-- CTA Button - Primary action emphasized -->
+                    <button id="shortenBtn" class="w-full btn-primary font-medium py-3 px-4 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         <span id="shortenText">Create Short Link</span>
                         <span id="shortenSpinner" class="ml-2 hidden">
                             <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -243,31 +315,34 @@
                 </div>
             </section>
 
-            <!-- Result Section -->
+            <!-- Result Section - Clear success feedback -->
             <section id="resultSection" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8 hidden">
                 <div class="flex flex-wrap justify-between items-center mb-4">
                     <h3 class="text-lg font-semibold text-gray-900">Your Short Link</h3>
                     <div class="flex items-center space-x-1 text-sm text-gray-500">
-                        <span class="material-icons-round text-base">visibility</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
                         <span id="viewCount">0</span>
-                        <span>clicks</span>
+                        <span>visits</span>
                     </div>
                 </div>
                 
                 <div class="flex items-center space-x-2 mb-4">
                     <input type="text" id="shortUrl" readonly 
-                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 font-medium text-indigo-600 truncate">
-                    <button id="copyBtn" class="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 font-medium text-indigo-600 truncate focus:outline-none">
+                    <button id="copyBtn" class="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" aria-label="Copy link">
                         <span class="material-icons-round text-gray-700">content_copy</span>
                     </button>
                 </div>
                 
                 <div class="grid grid-cols-2 gap-3">
-                    <button id="qrBtn" class="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 py-2.5 rounded-lg">
+                    <button id="qrBtn" class="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         <span class="material-icons-round">qr_code_2</span>
                         <span>QR Code</span>
                     </button>
-                    <button id="shareBtn" class="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 py-2.5 rounded-lg">
+                    <button id="shareBtn" class="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         <span class="material-icons-round">share</span>
                         <span>Share</span>
                     </button>
@@ -278,11 +353,16 @@
                 </div>
             </section>
 
-            <!-- Recent Links Section -->
+            <!-- Recent Links Section - Encourages reuse -->
             <section id="contentSection">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-gray-900">✨ Your Recent Links</h2>
-                    <button id="refreshBtn" class="text-indigo-600 hover:text-indigo-800 flex items-center space-x-1 text-sm">
+                    <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-1 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Your Recent Links
+                    </h2>
+                    <button id="refreshBtn" class="text-indigo-600 hover:text-indigo-800 flex items-center space-x-1 text-sm focus:outline-none">
                         <span class="material-icons-round text-base">refresh</span>
                         <span>Refresh</span>
                     </button>
@@ -296,16 +376,18 @@
             </section>
         </main>
 
-        <!-- Footer -->
+        <!-- Footer - Minimal but informative -->
         <footer class="bg-white border-t border-gray-200 py-8 mt-12">
             <div class="max-w-6xl mx-auto px-6">
                 <div class="flex flex-col md:flex-row justify-between items-center">
                     <div class="mb-4 md:mb-0">
                         <div class="flex items-center space-x-2">
-                            <span class="material-icons-round text-indigo-600">bolt</span>
+                            <svg class="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                            </svg>
                             <span class="text-lg font-semibold">QuickHop</span>
                         </div>
-                        <p class="text-sm text-gray-500 mt-1">The fastest way to share links</p>
+                        <p class="text-sm text-gray-500 mt-1">The simplest way to share links</p>
                     </div>
                     <div class="text-sm text-gray-500">
                         &copy; <span id="currentYear"></span> QuickHop. All rights reserved.
@@ -315,59 +397,59 @@
         </footer>
     </div>
 
-    <!-- QR Code Modal -->
+    <!-- QR Code Modal - Clear value proposition -->
     <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white rounded-xl p-6 max-w-xs w-full shadow-xl">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold">QR Code</h3>
-                <button id="closeQrModal" class="text-gray-500 hover:text-gray-700">
+                <button id="closeQrModal" class="text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Close">
                     <span class="material-icons-round">close</span>
                 </button>
             </div>
             <div id="qrCode" class="flex justify-center mb-4"></div>
-            <button id="downloadQrBtn" class="w-full btn-primary font-medium py-2.5 rounded-lg">
+            <button id="downloadQrBtn" class="w-full btn-primary font-medium py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Download QR Code
             </button>
         </div>
     </div>
 
-    <!-- Share Modal -->
+    <!-- Share Modal - Social proof integration -->
     <div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
         <div class="bg-white rounded-xl p-6 max-w-xs w-full shadow-xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold">Share Link</h3>
-                <button id="closeShareModal" class="text-gray-500 hover:text-gray-700">
+                <h3 class="text-lg font-semibold">Share Your Link</h3>
+                <button id="closeShareModal" class="text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Close">
                     <span class="material-icons-round">close</span>
                 </button>
             </div>
             <div class="grid grid-cols-2 gap-3 mb-4">
-                <a href="#" id="twitterShare" class="flex items-center justify-center space-x-2 bg-blue-400 hover:bg-blue-500 text-white py-2 rounded-lg">
+                <a href="#" id="twitterShare" class="flex items-center justify-center space-x-2 bg-blue-400 hover:bg-blue-500 text-white py-2 rounded-lg transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                     </svg>
                     <span>Twitter</span>
                 </a>
-                <a href="#" id="facebookShare" class="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+                <a href="#" id="facebookShare" class="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-600">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
                     </svg>
                     <span>Facebook</span>
                 </a>
-                <a href="#" id="linkedinShare" class="flex items-center justify-center space-x-2 bg-blue-800 hover:bg-blue-900 text-white py-2 rounded-lg">
+                <a href="#" id="linkedinShare" class="flex items-center justify-center space-x-2 bg-blue-800 hover:bg-blue-900 text-white py-2 rounded-lg transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                     </svg>
                     <span>LinkedIn</span>
                 </a>
-                <a href="#" id="whatsappShare" class="flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg">
+                <a href="#" id="whatsappShare" class="flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition transform hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.515 5.392 1.521 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
                     </svg>
                     <span>WhatsApp</span>
                 </a>
             </div>
-            <input type="text" id="shareUrl" readonly class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 mb-3">
-            <button id="copyShareBtn" class="w-full btn-primary font-medium py-2.5 rounded-lg">
+            <input type="text" id="shareUrl" readonly class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 mb-3 focus:outline-none">
+            <button id="copyShareBtn" class="w-full btn-primary font-medium py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Copy Link
             </button>
         </div>
@@ -376,6 +458,7 @@
     <script>
         // DOM Elements
         const appContainer = document.getElementById('appContainer');
+        const initialLoader = document.getElementById('initialLoader');
         const globalLoader = document.getElementById('globalLoader');
         const globalProgress = document.getElementById('globalProgress');
         const redirectPage = document.getElementById('redirectPage');
@@ -423,21 +506,27 @@
             // Set domain prefix
             domainPrefix.textContent = window.location.hostname + '/?u=';
             
-            // Show initial loading
-            simulateProgress();
-            
-            // Check for redirect
-            setTimeout(() => {
-                checkForRedirect();
-                loadLinks();
-            }, 800);
+            // Check for redirect first
+            checkForRedirect().finally(() => {
+                // After redirect check, show main app
+                setTimeout(() => {
+                    initialLoader.style.opacity = '0';
+                    setTimeout(() => {
+                        initialLoader.style.display = 'none';
+                        appContainer.classList.remove('hidden');
+                        simulateProgress();
+                        loadLinks();
+                    }, 300);
+                }, 500);
+            });
         });
 
         // Simulate progress loading
         function simulateProgress() {
             let progress = 0;
             const interval = setInterval(() => {
-                progress += Math.random() * 10;
+                progress += Math.random() * 15;
+                if (progress > 95) progress = 100;
                 globalProgress.style.width = `${progress}%`;
                 
                 if (progress >= 100) {
@@ -456,24 +545,37 @@
         const linksRef = database.ref('links');
         const publicLinksRef = database.ref('publicLinks');
 
-        // Show toast message
+        // Show toast message - Uses position and animation for better visibility
         function showToast(message, duration = 3000) {
             const toast = document.createElement('div');
-            toast.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg animate-fadein';
-            toast.textContent = message;
+            toast.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg animate-fadein flex items-center';
+            toast.innerHTML = `
+                <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                ${message}
+            `;
             document.body.appendChild(toast);
             
             setTimeout(() => {
-                toast.remove();
+                toast.style.opacity = '0';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
             }, duration);
         }
 
-        // Generate random slug
+        // Generate random slug - Uses simple memorable format
         function generateSlug() {
-            return Math.random().toString(36).substring(2, 8);
+            const adjectives = ['quick', 'fast', 'smart', 'easy', 'cool', 'neat', 'sharp', 'bright'];
+            const nouns = ['link', 'hop', 'jump', 'dash', 'path', 'way', 'route', 'go'];
+            const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+            const noun = nouns[Math.floor(Math.random() * nouns.length)];
+            const num = Math.floor(Math.random() * 90) + 10;
+            return `${adj}-${noun}-${num}`;
         }
 
-        // Format date
+        // Format date - Relative time for better UX
         function formatDate(date) {
             const now = new Date();
             const diff = now - new Date(date);
@@ -482,28 +584,28 @@
             if (seconds < 60) return 'just now';
             if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
             if (seconds < 86400) return `${Math.floor(seconds / 3600)} hours ago`;
-            return new Date(date).toLocaleDateString();
+            return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
-        // Validate URL
+        // Validate URL - More comprehensive check
         function isValidUrl(url) {
             try {
                 new URL(url);
-                return true;
+                return /^https?:\/\//i.test(url);
             } catch {
                 return false;
             }
         }
 
-        // Validate slug
+        // Validate slug - Clear requirements
         function isValidSlug(slug) {
-            return /^[a-z0-9_-]+$/i.test(slug);
+            return /^[a-z0-9-]+$/i.test(slug) && slug.length >= 3 && slug.length <= 30;
         }
 
-        // Create short link
+        // Create short link - With better error handling
         async function createShortLink() {
             const originalUrl = originalUrlInput.value.trim();
-            let customSlug = customSlugInput.value.trim();
+            let customSlug = customSlugInput.value.trim().toLowerCase();
             const isPublic = publicToggle.checked;
             
             // Validate URL
@@ -515,7 +617,7 @@
             }
             
             if (!isValidUrl(originalUrl)) {
-                urlError.textContent = 'Please enter a valid URL (include http:// or https://)';
+                urlError.textContent = 'Please enter a valid URL starting with http:// or https://';
                 urlError.classList.remove('hidden');
                 originalUrlInput.focus();
                 return;
@@ -526,18 +628,24 @@
             // Validate custom slug if provided
             if (customSlug) {
                 if (!isValidSlug(customSlug)) {
-                    slugError.textContent = 'Only letters, numbers, hyphens and underscores allowed';
+                    slugError.textContent = 'Use 3-30 letters, numbers or hyphens only';
                     slugError.classList.remove('hidden');
                     customSlugInput.focus();
                     return;
                 }
                 
                 // Check if slug exists
-                const slugExists = await checkSlugExists(customSlug);
-                if (slugExists) {
-                    slugError.textContent = 'This alias is already taken';
-                    slugError.classList.remove('hidden');
-                    customSlugInput.focus();
+                try {
+                    const slugExists = await checkSlugExists(customSlug);
+                    if (slugExists) {
+                        slugError.textContent = 'This alias is already taken';
+                        slugError.classList.remove('hidden');
+                        customSlugInput.focus();
+                        return;
+                    }
+                } catch (error) {
+                    console.error("Error checking slug:", error);
+                    showToast('Error checking alias availability');
                     return;
                 }
                 
@@ -546,7 +654,7 @@
                 customSlug = generateSlug();
             }
             
-            // Show loading
+            // Show loading - Visual feedback is crucial
             shortenText.classList.add('hidden');
             shortenSpinner.classList.remove('hidden');
             shortenBtn.disabled = true;
@@ -560,8 +668,6 @@
                 await linksRef.child(customSlug).set({
                     originalUrl: originalUrl,
                     createdAt: createdAt,
-                    viewCount: 0,
-                    redirectViews: 0,
                     isPublic: isPublic
                 });
                 
@@ -569,19 +675,18 @@
                 if (isPublic) {
                     await publicLinksRef.child(customSlug).set({
                         originalUrl: originalUrl,
-                        createdAt: createdAt,
-                        viewCount: 0
+                        createdAt: createdAt
                     });
                 }
                 
-                // Show result
+                // Show result - Clear success feedback
                 shortUrlElement.value = shortUrl;
                 shareUrl.value = shortUrl;
                 viewCountElement.textContent = '0';
                 createdAtElement.textContent = formatDate(createdAt);
                 resultSection.classList.remove('hidden');
                 
-                // Generate QR code
+                // Generate QR code - Visual representation
                 QRCode.toCanvas(qrCodeElement, shortUrl, {
                     width: 200,
                     margin: 2,
@@ -589,24 +694,26 @@
                         dark: '#4f46e5',
                         light: '#ffffff'
                     }
+                }, (error) => {
+                    if (error) console.error("QR Code error:", error);
                 });
                 
                 showToast('Link created successfully!');
                 loadLinks();
                 
-                // Scroll to result
+                // Scroll to result - Direct attention
                 setTimeout(() => {
                     resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }, 100);
             } catch (error) {
                 console.error("Error saving link:", error);
                 showToast('Failed to create link. Please try again.');
+            } finally {
+                // Reset loading state
+                shortenText.classList.remove('hidden');
+                shortenSpinner.classList.add('hidden');
+                shortenBtn.disabled = false;
             }
-            
-            // Reset loading
-            shortenText.classList.remove('hidden');
-            shortenSpinner.classList.add('hidden');
-            shortenBtn.disabled = false;
         }
 
         // Check if slug exists in Firebase
@@ -615,7 +722,7 @@
             return snapshot.exists();
         }
 
-        // Load user's links
+        // Load user's links - With error handling
         async function loadLinks() {
             try {
                 const snapshot = await linksRef.orderByChild('createdAt').once('value');
@@ -632,7 +739,7 @@
                 if (linksArray.length === 0) {
                     contentList.innerHTML = `
                         <div class="bg-white p-4 rounded-lg border border-gray-200">
-                            <p class="text-gray-500 text-center">No links created yet</p>
+                            <p class="text-gray-500 text-center">Create your first short link above</p>
                         </div>
                     `;
                     return;
@@ -643,37 +750,45 @@
                 linksArray.forEach(link => {
                     const shortUrl = `${window.location.origin}/?u=${link.slug}`;
                     const linkElement = document.createElement('div');
-                    linkElement.className = 'bg-white p-4 rounded-lg border border-gray-200 hover:shadow-sm transition';
+                    linkElement.className = 'bg-white p-4 rounded-lg border border-gray-200 hover:shadow-sm transition cursor-pointer';
                     linkElement.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-indigo-600 truncate">${shortUrl}</p>
+                                <p class="text-xs text-gray-500 truncate mt-1">${link.originalUrl}</p>
                                 <div class="flex items-center mt-2 text-xs text-gray-500">
-                                    <span>${(link.viewCount || 0) + (link.redirectViews || 0)} total clicks</span>
-                                    <span class="mx-1">•</span>
                                     <span>${formatDate(link.createdAt)}</span>
-                                    ${link.isPublic ? '<span class="ml-1 px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded">Public</span>' : ''}
+                                    ${link.isPublic ? '<span class="ml-2 px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded">Public</span>' : ''}
                                 </div>
                             </div>
                             <div class="flex space-x-1 ml-2">
-                                <button class="copy-link p-2 text-gray-500 hover:text-indigo-600 rounded-lg" data-url="${shortUrl}" title="Copy">
+                                <button class="copy-link p-2 text-gray-500 hover:text-indigo-600 rounded-lg focus:outline-none" data-url="${shortUrl}" title="Copy" aria-label="Copy">
                                     <span class="material-icons-round text-sm">content_copy</span>
                                 </button>
-                                <button class="share-link p-2 text-gray-500 hover:text-indigo-600 rounded-lg" data-url="${shortUrl}" title="Share">
+                                <button class="share-link p-2 text-gray-500 hover:text-indigo-600 rounded-lg focus:outline-none" data-url="${shortUrl}" title="Share" aria-label="Share">
                                     <span class="material-icons-round text-sm">share</span>
                                 </button>
-                                <a href="${shortUrl}" target="_blank" class="p-2 text-gray-500 hover:text-indigo-600 rounded-lg" title="Open">
+                                <a href="${shortUrl}" target="_blank" class="p-2 text-gray-500 hover:text-indigo-600 rounded-lg focus:outline-none" title="Open" aria-label="Open">
                                     <span class="material-icons-round text-sm">open_in_new</span>
                                 </a>
                             </div>
                         </div>
                     `;
                     contentList.appendChild(linkElement);
+                    
+                    // Click anywhere on card to copy
+                    linkElement.addEventListener('click', (e) => {
+                        if (!e.target.closest('button') && !e.target.closest('a')) {
+                            navigator.clipboard.writeText(shortUrl);
+                            showToast('Link copied to clipboard!');
+                        }
+                    });
                 });
                 
                 // Add copy event listeners
                 document.querySelectorAll('.copy-link').forEach(btn => {
-                    btn.addEventListener('click', () => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
                         navigator.clipboard.writeText(btn.getAttribute('data-url'));
                         showToast('Link copied to clipboard!');
                     });
@@ -681,7 +796,8 @@
                 
                 // Add share event listeners
                 document.querySelectorAll('.share-link').forEach(btn => {
-                    btn.addEventListener('click', () => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
                         shareUrl.value = btn.getAttribute('data-url');
                         shareModal.classList.remove('hidden');
                         document.body.style.overflow = 'hidden';
@@ -691,88 +807,107 @@
                 
             } catch (error) {
                 console.error("Error loading links:", error);
-                showToast('Failed to load links. Please try again.');
+                contentList.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <p class="text-gray-500 text-center">Error loading links. Try refreshing.</p>
+                    </div>
+                `;
             }
         }
 
-        // Check for redirect and show landing page
+        // Check for redirect and show landing page - With better UX
         async function checkForRedirect() {
             const params = new URLSearchParams(window.location.search);
             const slug = params.get('u');
             
-            if (slug) {
-                try {
-                    const snapshot = await linksRef.child(slug).once('value');
-                    const link = snapshot.val();
+            if (!slug) return;
+            
+            try {
+                const snapshot = await linksRef.child(slug).once('value');
+                const link = snapshot.val();
+                
+                if (link && link.originalUrl) {
+                    // Show redirect page immediately
+                    initialLoader.style.display = 'none';
+                    document.body.style.overflow = 'hidden';
+                    redirectPage.classList.remove('hidden');
                     
-                    if (link && link.originalUrl) {
-                        // Show redirect page
-                        document.body.style.overflow = 'hidden';
-                        redirectPage.classList.remove('hidden');
+                    // Start countdown - Creates urgency
+                    let seconds = 10;
+                    countdown.textContent = `${seconds}s`;
+                    progressBar.style.width = '100%';
+                    
+                    const countdownInterval = setInterval(() => {
+                        seconds--;
+                        countdown.textContent = `${seconds}s`;
+                        progressBar.style.width = `${seconds * 10}%`;
                         
-                        // Update view count (initial click)
-                        await linksRef.child(slug).update({
-                            viewCount: (link.viewCount || 0) + 1
-                        });
-                        
-                        // Start countdown
-                        let seconds = 10;
-                        const countdownInterval = setInterval(() => {
-                            seconds--;
-                            countdown.textContent = `${seconds}s`;
-                            progressBar.style.width = `${seconds * 10}%`;
-                            
-                            if (seconds <= 0) {
-                                clearInterval(countdownInterval);
-                                // Update redirect view count
-                                linksRef.child(slug).update({
-                                    redirectViews: (link.redirectViews || 0) + 1
-                                });
-                                window.location.href = link.originalUrl;
-                            }
-                        }, 1000);
-                        
-                        // Skip button functionality
-                        skipBtn.addEventListener('click', () => {
+                        if (seconds <= 0) {
                             clearInterval(countdownInterval);
-                            // Update redirect view count
-                            linksRef.child(slug).update({
-                                redirectViews: (link.redirectViews || 0) + 1
-                            });
-                            window.location.href = link.originalUrl;
-                        }, { once: true });
-                    } else {
-                        // Invalid link, show main page
-                        showToast('Invalid or expired link');
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                    }
-                } catch (error) {
-                    console.error("Error checking redirect:", error);
+                            redirectTo(link.originalUrl);
+                        }
+                    }, 1000);
+                    
+                    // Skip button functionality
+                    skipBtn.addEventListener('click', () => {
+                        clearInterval(countdownInterval);
+                        redirectTo(link.originalUrl);
+                    }, { once: true });
+                    
+                    // Allow direct click on mobile
+                    skipBtn.addEventListener('touchstart', () => {
+                        clearInterval(countdownInterval);
+                        redirectTo(link.originalUrl);
+                    }, { once: true, passive: true });
+                } else {
+                    // Invalid link, show main page
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
+            } catch (error) {
+                console.error("Error checking redirect:", error);
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
+        }
+        
+        // Handle actual redirection
+        function redirectTo(url) {
+            // Add slight delay for better perceived performance
+            setTimeout(() => {
+                window.location.href = url;
+            }, 200);
         }
 
         // Download QR code
         function downloadQRCode() {
             const canvas = qrCodeElement.querySelector('canvas');
-            if (!canvas) return;
+            if (!canvas) {
+                showToast('QR code not ready yet');
+                return;
+            }
             
             const link = document.createElement('a');
             link.download = `quickhop-${new Date().getTime()}.png`;
-            link.href = canvas.toDataURL();
+            link.href = canvas.toDataURL('image/png');
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
         }
 
         // Setup social sharing
         function setupSocialSharing() {
             const currentUrl = encodeURIComponent(shareUrl.value);
-            const text = encodeURIComponent("Check out this link I shortened with QuickHop: ");
+            const text = encodeURIComponent("Check out this link I shortened with QuickHop");
             
             twitterShare.href = `https://twitter.com/intent/tweet?text=${text}&url=${currentUrl}`;
             facebookShare.href = `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
             linkedinShare.href = `https://www.linkedin.com/shareArticle?mini=true&url=${currentUrl}`;
-            whatsappShare.href = `https://wa.me/?text=${text}${currentUrl}`;
+            whatsappShare.href = `https://wa.me/?text=${text}%20${currentUrl}`;
+            
+            // Open in new tab
+            [twitterShare, facebookShare, linkedinShare, whatsappShare].forEach(link => {
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+            });
         }
 
         // Event Listeners
@@ -824,17 +959,32 @@
         });
         
         refreshBtn.addEventListener('click', () => {
-            loadLinks();
+            refreshBtn.querySelector('svg').classList.add('animate-spin');
+            loadLinks().finally(() => {
+                setTimeout(() => {
+                    refreshBtn.querySelector('svg').classList.remove('animate-spin');
+                }, 300);
+            });
             showToast('Links refreshed');
         });
         
-        // Handle Enter key
+        // Handle Enter key for better keyboard UX
         originalUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') createShortLink();
         });
         
         customSlugInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') createShortLink();
+        });
+        
+        // Better focus management for modals
+        [qrModal, shareModal].forEach(modal => {
+            modal.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    modal.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }
+            });
         });
     </script>
 </body>
