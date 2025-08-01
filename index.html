@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LinkShort | Premium URL Shortener</title>
-    <meta name="description" content="Free professional URL shortener with analytics and custom domains">
+    <title>🔗 QuickHop | Instant URL Shortener</title>
+    <meta name="description" content="The fastest way to shorten links and track clicks in real-time. Perfect for marketers and content creators.">
     
     <!-- Material Design & Fonts -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,185 +19,94 @@
     
     <style>
         :root {
-            --primary: #4361ee;
-            --primary-dark: #3a56d4;
-            --secondary: #3f37c9;
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #6366f1;
             --surface: #ffffff;
-            --background: #f8fafc;
+            --background: #f9fafb;
             --on-primary: #ffffff;
-            --on-surface: #1e293b;
-            --on-background: #1e293b;
-            --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-            --elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-            --elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+            --on-surface: #111827;
+            --on-background: #111827;
+            --elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --elevation-2: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --elevation-3: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         
         body {
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background-color: var(--background);
             color: var(--on-background);
             overflow-x: hidden;
         }
         
-        /* Material Design Elevation */
-        .elevation-1 {
-            box-shadow: var(--elevation-1);
-        }
-        .elevation-2 {
-            box-shadow: var(--elevation-2);
-        }
-        .elevation-3 {
-            box-shadow: var(--elevation-3);
+        /* Loading Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Toast Notification */
-        .toast {
+        .animate-fadein {
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+        
+        /* Progress Loader */
+        .progress-loader {
+            width: 100%;
+            height: 4px;
+            background-color: rgba(79, 70, 229, 0.2);
             position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0;
+            background-color: var(--primary);
+            transition: width 0.4s ease;
+        }
+        
+        /* Button States */
+        .btn-primary {
             background-color: var(--primary);
             color: var(--on-primary);
-            padding: 12px 24px;
-            border-radius: 8px;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s, transform 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
             box-shadow: var(--elevation-2);
         }
-        .toast.show {
-            opacity: 1;
-            transform: translateX(-50%) translateY(-10px);
+        
+        .btn-primary:active {
+            transform: translateY(0);
         }
         
-        /* Loading Spinner */
-        .loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: var(--on-primary);
-            animation: spin 1s ease-in-out infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Particles Background */
-        #particles-js {
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            z-index: -1;
-            opacity: 0.3;
-        }
-        
-        /* Link Card */
-        .link-card {
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            border-left: 4px solid transparent;
-        }
-        .link-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--elevation-2);
-            border-left-color: var(--primary);
-        }
-        
-        /* Social Icons */
-        .social-icon {
-            transition: all 0.2s ease;
-        }
-        .social-icon:hover {
-            transform: scale(1.1) translateY(-2px);
-        }
-        
-        /* Button Animation */
-        .btn-animate {
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-animate:after {
-            content: "";
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.5);
-            opacity: 0;
-            border-radius: 100%;
-            transform: scale(1, 1) translate(-50%);
-            transform-origin: 50% 50%;
-        }
-        .btn-animate:focus:not(:active)::after {
-            animation: ripple 1s ease-out;
-        }
-        @keyframes ripple {
-            0% {
-                transform: scale(0, 0);
-                opacity: 0.5;
-            }
-            100% {
-                transform: scale(20, 20);
-                opacity: 0;
-            }
-        }
-        
-        /* Redirect Page */
-        .redirect-page {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: var(--surface);
-            z-index: 1000;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 2rem;
-            overflow: hidden;
-        }
-        .skip-btn {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
+        /* Psychological Triggers */
+        .urgency-badge {
+            background-color: #ef4444;
             animation: pulse 2s infinite;
         }
+        
         @keyframes pulse {
-            0% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.05); }
-            100% { transform: translateX(-50%) scale(1); }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
         
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 1rem;
+        /* Mobile First Adjustments */
+        @media (min-width: 768px) {
+            .input-group-text {
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
             }
-            .main-content {
-                padding: 1rem;
-            }
-            .input-group {
-                flex-direction: column;
-            }
-            .input-group > span {
-                border-radius: 0.375rem 0.375rem 0 0;
-                border-right: 1px solid #d1d5db;
-                border-bottom: none;
-            }
-            .input-group > input {
-                border-radius: 0 0 0.375rem 0.375rem;
-                border-left: 1px solid #d1d5db;
-                border-top: none;
+            
+            .input-group-input {
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
             }
         }
     </style>
@@ -205,7 +114,6 @@
 <body class="min-h-screen">
     <!-- Firebase Configuration -->
     <script>
-        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAGntp_9Moqk54aWDIuqdR2uv-G3IhUXxU",
             authDomain: "link-shortner-project-fc9dc.firebaseapp.com",
@@ -216,167 +124,208 @@
             appId: "1:333006092673:web:ed5927494b158703ad1080"
         };
 
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
     </script>
 
-    <!-- Firebase Realtime Database Rules -->
-    <!--
-    {
-      "rules": {
-        "links": {
-          "$slug": {
-            ".read": true,
-            ".write": "auth != null || newData.exists()",
-            ".validate": "newData.hasChildren(['originalUrl', 'createdAt'])",
-            "originalUrl": {
-              ".validate": "newData.isString() && newData.val().matches(/^https?:\\/\\/.+/)"
-            },
-            "createdAt": {
-              ".validate": "newData.isString()"
-            },
-            "viewCount": {
-              ".validate": "newData.isNumber()"
-            },
-            "redirectViews": {
-              ".validate": "newData.isNumber()"
-            }
-          }
-        }
-      }
-    }
-    -->
+    <!-- Global Loading Indicator -->
+    <div id="globalLoader" class="progress-loader">
+        <div id="globalProgress" class="progress-bar"></div>
+    </div>
 
-    <!-- Particles Background -->
-    <div id="particles-js"></div>
-
-    <!-- Redirect Page (Hidden by default) -->
-    <div id="redirectPage" class="redirect-page hidden">
-        <div class="max-w-md mx-auto">
-            <div class="mb-8">
-                <span class="material-icons-round text-6xl text-primary">link</span>
-                <h1 class="text-3xl font-bold mt-4">Redirecting You</h1>
+    <!-- Redirect Landing Page -->
+    <div id="redirectPage" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center px-4 hidden">
+        <div class="max-w-md w-full animate-fadein">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-indigo-100 rounded-full mb-4">
+                    <span class="material-icons-round text-indigo-600 text-3xl">rocket_launch</span>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">🚀 Taking You There!</h1>
+                <p class="text-gray-600">You're being redirected to your destination</p>
             </div>
-            <div class="mb-8">
-                <p class="text-lg mb-4">You will be redirected in <span id="countdown">10</span> seconds</p>
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div id="progressBar" class="bg-primary h-2.5 rounded-full" style="width: 100%"></div>
+            
+            <!-- Marketing Banner -->
+            <div class="bg-indigo-50 border border-indigo-100 rounded-lg p-4 mb-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <span class="material-icons-round text-indigo-600">bolt</span>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-indigo-800">Powered by QuickHop</h3>
+                        <p class="text-xs text-indigo-600 mt-1">The world's fastest URL shortener with real-time analytics.</p>
+                        <a href="/" class="text-xs font-medium text-indigo-600 hover:text-indigo-500 inline-flex items-center mt-1">
+                            Try it free <span class="material-icons-round text-xs ml-1">arrow_forward</span>
+                        </a>
+                    </div>
                 </div>
             </div>
-            <button id="skipBtn" class="skip-btn bg-primary hover:bg-primary-dark text-white font-medium py-3 px-6 rounded-full elevation-2 btn-animate">
-                Continue to your destination &rarr;
+            
+            <div class="mb-6">
+                <div class="flex justify-between text-sm text-gray-500 mb-1">
+                    <span>Redirecting in...</span>
+                    <span id="countdown">10s</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-indigo-600 h-2 rounded-full" style="width: 100%"></div>
+                </div>
+            </div>
+            
+            <button id="skipBtn" class="w-full btn-primary font-medium py-3 px-4 rounded-lg flex items-center justify-center">
+                Skip Waiting <span class="material-icons-round ml-2">double_arrow</span>
             </button>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast"></div>
-
-    <!-- Header -->
-    <header class="bg-surface shadow-sm py-4 px-6 sticky top-0 z-50 elevation-1">
-        <div class="max-w-7xl mx-auto flex justify-between items-center header-content">
-            <div class="flex items-center space-x-3">
-                <span class="material-icons-round text-primary text-3xl">bolt</span>
-                <h1 id="siteTitle" class="text-2xl font-bold text-primary"></h1>
-            </div>
-            <button id="newLinkBtn" class="flex items-center space-x-2 bg-primary hover:bg-primary-dark text-white font-medium py-2.5 px-5 rounded-lg elevation-1 btn-animate transition-all duration-300">
-                <span class="material-icons-round text-sm">add</span>
-                <span>New Link</span>
-            </button>
-        </div>
-    </header>
-
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-8 px-6 main-content">
-        <!-- URL Shortener Section -->
-        <section id="shortenerSection" class="bg-surface rounded-xl elevation-1 p-6 mb-8 border border-gray-100">
-            <h2 class="text-2xl font-semibold mb-6 text-on-surface">Create Short Link</h2>
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Destination URL</label>
-                    <input type="url" id="originalUrl" placeholder="https://example.com" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200">
-                    <p id="urlError" class="mt-1 text-sm text-red-600 hidden"></p>
+    <!-- Main App -->
+    <div id="appContainer">
+        <!-- Header -->
+        <header class="bg-white shadow-sm py-4 px-6 sticky top-0 z-40">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <span class="material-icons-round text-indigo-600 text-2xl">bolt</span>
+                    <span class="text-xl font-bold text-indigo-600">QuickHop</span>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Custom Alias (optional)</label>
-                    <div class="flex input-group">
-                        <span id="domainPrefix" class="inline-flex items-center px-4 bg-gray-100 border border-r-0 rounded-l-lg text-gray-600 text-sm"></span>
-                        <input type="text" id="customSlug" placeholder="myalias" 
-                            class="flex-1 min-w-0 px-4 py-3 border rounded-r-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-200">
+                <button id="newLinkBtn" class="btn-primary font-medium py-2 px-4 rounded-lg flex items-center space-x-1">
+                    <span class="material-icons-round text-sm">add</span>
+                    <span>New Link</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-6xl mx-auto py-8 px-6">
+            <!-- Shortener Section -->
+            <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">Create Your Short Link</h2>
+                
+                <div class="space-y-5">
+                    <!-- URL Input -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">🔗 Destination URL</label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <input type="url" id="originalUrl" placeholder="https://yourlongurl.com/example" 
+                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <p id="urlError" class="mt-1 text-sm text-red-600 hidden"></p>
                     </div>
-                    <p id="slugError" class="mt-1 text-sm text-red-600 hidden"></p>
+                    
+                    <!-- Custom Alias -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">✨ Custom Alias (optional)</label>
+                        <div class="mt-1 flex rounded-md shadow-sm">
+                            <span id="domainPrefix" class="inline-flex items-center px-4 bg-gray-50 text-gray-500 border border-r-0 rounded-l-md">
+                                quickhop.com/?u=
+                            </span>
+                            <input type="text" id="customSlug" placeholder="my-alias" 
+                                   class="flex-1 min-w-0 block w-full px-4 py-3 border rounded-r-md focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <p id="slugError" class="mt-1 text-sm text-red-600 hidden"></p>
+                    </div>
+                    
+                    <!-- Privacy Toggle -->
+                    <div class="flex items-center">
+                        <input type="checkbox" id="publicToggle" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded">
+                        <label for="publicToggle" class="ml-2 block text-sm text-gray-700">
+                            Show in public list
+                        </label>
+                    </div>
+                    
+                    <!-- CTA Button -->
+                    <button id="shortenBtn" class="w-full btn-primary font-medium py-3 px-4 rounded-lg flex items-center justify-center">
+                        <span id="shortenText">Create Short Link</span>
+                        <span id="shortenSpinner" class="ml-2 hidden">
+                            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                        </span>
+                    </button>
                 </div>
-                <button id="shortenBtn" class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3.5 rounded-lg transition-all duration-300 flex justify-center items-center space-x-2 elevation-1 btn-animate hover:elevation-2">
-                    <span id="shortenText">Shorten URL</span>
-                    <span id="shortenSpinner" class="loading-spinner hidden"></span>
-                </button>
-            </div>
-        </section>
+            </section>
 
-        <!-- Result Section -->
-        <div id="resultSection" class="hidden bg-surface rounded-xl elevation-1 p-6 mb-8 border border-gray-100">
-            <div class="flex flex-wrap justify-between items-center mb-5 gap-4">
-                <h3 class="text-xl font-semibold text-on-surface">Your Short Link</h3>
-                <div class="flex items-center space-x-2 text-sm text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
-                    <span class="material-icons-round text-sm">visibility</span>
-                    <span id="viewCount">0</span>
-                    <span>views</span>
+            <!-- Result Section -->
+            <section id="resultSection" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8 hidden">
+                <div class="flex flex-wrap justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Your Short Link</h3>
+                    <div class="flex items-center space-x-1 text-sm text-gray-500">
+                        <span class="material-icons-round text-base">visibility</span>
+                        <span id="viewCount">0</span>
+                        <span>clicks</span>
+                    </div>
                 </div>
-            </div>
-            <div class="flex items-stretch gap-2 mb-5">
-                <input type="text" id="shortUrl" readonly 
-                    class="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 font-medium text-primary truncate">
-                <button id="copyBtn" class="p-3 rounded-lg hover:bg-gray-100 transition-all duration-200 elevation-1 btn-animate" title="Copy to clipboard">
-                    <span class="material-icons-round text-gray-700">content_copy</span>
-                </button>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-                <button id="qrBtn" class="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 py-3 rounded-lg transition-all duration-200 font-medium elevation-1 btn-animate">
-                    <span class="material-icons-round">qr_code_2</span>
-                    <span>QR Code</span>
-                </button>
-                <button id="shareBtn" class="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 py-3 rounded-lg transition-all duration-200 font-medium elevation-1 btn-animate">
-                    <span class="material-icons-round">share</span>
-                    <span>Share</span>
-                </button>
-            </div>
-            <div class="mt-4 text-sm text-gray-500">
-                Created: <span id="createdAt">just now</span>
-            </div>
-        </div>
+                
+                <div class="flex items-center space-x-2 mb-4">
+                    <input type="text" id="shortUrl" readonly 
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 font-medium text-indigo-600 truncate">
+                    <button id="copyBtn" class="p-3 rounded-lg bg-gray-100 hover:bg-gray-200 transition">
+                        <span class="material-icons-round text-gray-700">content_copy</span>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="qrBtn" class="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 py-2.5 rounded-lg">
+                        <span class="material-icons-round">qr_code_2</span>
+                        <span>QR Code</span>
+                    </button>
+                    <button id="shareBtn" class="flex items-center justify-center space-x-2 bg-gray-100 hover:bg-gray-200 py-2.5 rounded-lg">
+                        <span class="material-icons-round">share</span>
+                        <span>Share</span>
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-xs text-gray-500">
+                    Created: <span id="createdAt">just now</span>
+                </div>
+            </section>
 
-        <!-- Links Section -->
-        <section id="contentSection">
-            <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
-                <h2 class="text-2xl font-semibold text-on-surface">Recent Links</h2>
-                <button id="refreshBtn" class="text-primary hover:text-primary-dark flex items-center space-x-1 text-sm transition-all duration-200 elevation-1 bg-white px-3 py-1.5 rounded-lg btn-animate">
-                    <span class="material-icons-round text-sm">refresh</span>
-                    <span>Refresh</span>
-                </button>
-            </div>
-            <div id="contentList" class="space-y-4">
-                <!-- Links will be loaded here -->
-                <div class="bg-surface p-5 rounded-xl elevation-1 border border-gray-200">
-                    <p class="text-gray-500 text-center">No links created yet</p>
+            <!-- Recent Links Section -->
+            <section id="contentSection">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">✨ Your Recent Links</h2>
+                    <button id="refreshBtn" class="text-indigo-600 hover:text-indigo-800 flex items-center space-x-1 text-sm">
+                        <span class="material-icons-round text-base">refresh</span>
+                        <span>Refresh</span>
+                    </button>
+                </div>
+                
+                <div id="contentList" class="space-y-3">
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <p class="text-gray-500 text-center">No links created yet</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-white border-t border-gray-200 py-8 mt-12">
+            <div class="max-w-6xl mx-auto px-6">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div class="mb-4 md:mb-0">
+                        <div class="flex items-center space-x-2">
+                            <span class="material-icons-round text-indigo-600">bolt</span>
+                            <span class="text-lg font-semibold">QuickHop</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">The fastest way to share links</p>
+                    </div>
+                    <div class="text-sm text-gray-500">
+                        &copy; <span id="currentYear"></span> QuickHop. All rights reserved.
+                    </div>
                 </div>
             </div>
-        </section>
-    </main>
+        </footer>
+    </div>
 
     <!-- QR Code Modal -->
     <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-surface rounded-xl p-6 max-w-xs w-full elevation-3">
+        <div class="bg-white rounded-xl p-6 max-w-xs w-full shadow-xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold">QR Code</h3>
-                <button id="closeQrModal" class="text-gray-500 hover:text-gray-700 transition-all duration-200 rounded-full p-1 btn-animate">
+                <h3 class="text-lg font-semibold">QR Code</h3>
+                <button id="closeQrModal" class="text-gray-500 hover:text-gray-700">
                     <span class="material-icons-round">close</span>
                 </button>
             </div>
             <div id="qrCode" class="flex justify-center mb-4"></div>
-            <p class="text-center text-sm text-gray-600 mb-4">Scan to visit the link</p>
-            <button id="downloadQrBtn" class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3 rounded-lg transition-all duration-300 elevation-1 btn-animate">
+            <button id="downloadQrBtn" class="w-full btn-primary font-medium py-2.5 rounded-lg">
                 Download QR Code
             </button>
         </div>
@@ -384,69 +333,58 @@
 
     <!-- Share Modal -->
     <div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50 p-4">
-        <div class="bg-surface rounded-xl p-6 max-w-xs w-full elevation-3">
+        <div class="bg-white rounded-xl p-6 max-w-xs w-full shadow-xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold">Share Link</h3>
-                <button id="closeShareModal" class="text-gray-500 hover:text-gray-700 transition-all duration-200 rounded-full p-1 btn-animate">
+                <h3 class="text-lg font-semibold">Share Link</h3>
+                <button id="closeShareModal" class="text-gray-500 hover:text-gray-700">
                     <span class="material-icons-round">close</span>
                 </button>
             </div>
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <a href="#" id="twitterShare" class="social-icon flex flex-col items-center justify-center bg-blue-400 hover:bg-blue-500 text-white p-4 rounded-lg elevation-1 transition-all duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <a href="#" id="twitterShare" class="flex items-center justify-center space-x-2 bg-blue-400 hover:bg-blue-500 text-white py-2 rounded-lg">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z"/>
                     </svg>
-                    <span class="mt-2 text-sm">Twitter</span>
+                    <span>Twitter</span>
                 </a>
-                <a href="#" id="facebookShare" class="social-icon flex flex-col items-center justify-center bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg elevation-1 transition-all duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <a href="#" id="facebookShare" class="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/>
                     </svg>
-                    <span class="mt-2 text-sm">Facebook</span>
+                    <span>Facebook</span>
                 </a>
-                <a href="#" id="linkedinShare" class="social-icon flex flex-col items-center justify-center bg-blue-800 hover:bg-blue-900 text-white p-4 rounded-lg elevation-1 transition-all duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <a href="#" id="linkedinShare" class="flex items-center justify-center space-x-2 bg-blue-800 hover:bg-blue-900 text-white py-2 rounded-lg">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                     </svg>
-                    <span class="mt-2 text-sm">LinkedIn</span>
+                    <span>LinkedIn</span>
                 </a>
-                <a href="#" id="whatsappShare" class="social-icon flex flex-col items-center justify-center bg-green-500 hover:bg-green-600 text-white p-4 rounded-lg elevation-1 transition-all duration-200">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <a href="#" id="whatsappShare" class="flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.515 5.392 1.521 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
                     </svg>
-                    <span class="mt-2 text-sm">WhatsApp</span>
+                    <span>WhatsApp</span>
                 </a>
             </div>
-            <input type="text" id="shareUrl" readonly class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 mb-4 font-medium">
-            <button id="copyShareBtn" class="w-full bg-primary hover:bg-primary-dark text-white font-medium py-3 rounded-lg transition-all duration-300 elevation-1 btn-animate">
+            <input type="text" id="shareUrl" readonly class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 mb-3">
+            <button id="copyShareBtn" class="w-full btn-primary font-medium py-2.5 rounded-lg">
                 Copy Link
             </button>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-surface border-t border-gray-200 py-6 mt-12">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <div class="mb-4 md:mb-0">
-                    <div class="flex items-center space-x-2">
-                        <span class="material-icons-round text-primary">bolt</span>
-                        <span class="text-lg font-semibold">LinkShort</span>
-                    </div>
-                    <p class="text-sm text-gray-500 mt-1">The premium URL shortener for professionals</p>
-                </div>
-                <div class="text-sm text-gray-500">
-                    &copy; <span id="currentYear"></span> LinkShort. All rights reserved.
-                </div>
-            </div>
-        </div>
-    </footer>
-
     <script>
         // DOM Elements
-        const toast = document.getElementById('toast');
+        const appContainer = document.getElementById('appContainer');
+        const globalLoader = document.getElementById('globalLoader');
+        const globalProgress = document.getElementById('globalProgress');
+        const redirectPage = document.getElementById('redirectPage');
+        const skipBtn = document.getElementById('skipBtn');
+        const countdown = document.getElementById('countdown');
+        const progressBar = document.getElementById('progressBar');
         const originalUrlInput = document.getElementById('originalUrl');
         const customSlugInput = document.getElementById('customSlug');
+        const publicToggle = document.getElementById('publicToggle');
         const shortenBtn = document.getElementById('shortenBtn');
         const shortenText = document.getElementById('shortenText');
         const shortenSpinner = document.getElementById('shortenSpinner');
@@ -474,135 +412,59 @@
         const facebookShare = document.getElementById('facebookShare');
         const linkedinShare = document.getElementById('linkedinShare');
         const whatsappShare = document.getElementById('whatsappShare');
-        const siteTitle = document.getElementById('siteTitle');
         const domainPrefix = document.getElementById('domainPrefix');
-        const redirectPage = document.getElementById('redirectPage');
-        const skipBtn = document.getElementById('skipBtn');
-        const countdown = document.getElementById('countdown');
-        const progressBar = document.getElementById('progressBar');
         const currentYear = document.getElementById('currentYear');
 
-        // Set dynamic hostname and origin
-        siteTitle.textContent = window.location.hostname;
-        domainPrefix.textContent = window.location.origin.replace(/^https?:\/\//, '') + "/?u=";
-        currentYear.textContent = new Date().getFullYear();
-
-        // Initialize particles.js
-        particlesJS("particles-js", {
-            "particles": {
-                "number": {
-                    "value": 80,
-                    "density": {
-                        "enable": true,
-                        "value_area": 800
-                    }
-                },
-                "color": {
-                    "value": "#4361ee"
-                },
-                "shape": {
-                    "type": "circle",
-                    "stroke": {
-                        "width": 0,
-                        "color": "#000000"
-                    },
-                    "polygon": {
-                        "nb_sides": 5
-                    }
-                },
-                "opacity": {
-                    "value": 0.3,
-                    "random": false,
-                    "anim": {
-                        "enable": false,
-                        "speed": 1,
-                        "opacity_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "size": {
-                    "value": 3,
-                    "random": true,
-                    "anim": {
-                        "enable": false,
-                        "speed": 40,
-                        "size_min": 0.1,
-                        "sync": false
-                    }
-                },
-                "line_linked": {
-                    "enable": true,
-                    "distance": 150,
-                    "color": "#4361ee",
-                    "opacity": 0.2,
-                    "width": 1
-                },
-                "move": {
-                    "enable": true,
-                    "speed": 2,
-                    "direction": "none",
-                    "random": false,
-                    "straight": false,
-                    "out_mode": "out",
-                    "bounce": false,
-                    "attract": {
-                        "enable": false,
-                        "rotateX": 600,
-                        "rotateY": 1200
-                    }
-                }
-            },
-            "interactivity": {
-                "detect_on": "canvas",
-                "events": {
-                    "onhover": {
-                        "enable": true,
-                        "mode": "grab"
-                    },
-                    "onclick": {
-                        "enable": true,
-                        "mode": "push"
-                    },
-                    "resize": true
-                },
-                "modes": {
-                    "grab": {
-                        "distance": 140,
-                        "line_linked": {
-                            "opacity": 1
-                        }
-                    },
-                    "bubble": {
-                        "distance": 400,
-                        "size": 40,
-                        "duration": 2,
-                        "opacity": 8,
-                        "speed": 3
-                    },
-                    "repulse": {
-                        "distance": 200,
-                        "duration": 0.4
-                    },
-                    "push": {
-                        "particles_nb": 4
-                    },
-                    "remove": {
-                        "particles_nb": 2
-                    }
-                }
-            },
-            "retina_detect": true
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set current year
+            currentYear.textContent = new Date().getFullYear();
+            
+            // Set domain prefix
+            domainPrefix.textContent = window.location.hostname + '/?u=';
+            
+            // Show initial loading
+            simulateProgress();
+            
+            // Check for redirect
+            setTimeout(() => {
+                checkForRedirect();
+                loadLinks();
+            }, 800);
         });
+
+        // Simulate progress loading
+        function simulateProgress() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 10;
+                globalProgress.style.width = `${progress}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        globalLoader.style.opacity = '0';
+                        setTimeout(() => {
+                            globalLoader.style.display = 'none';
+                        }, 300);
+                    }, 300);
+                }
+            }, 100);
+        }
 
         // Firebase Database Reference
         const linksRef = database.ref('links');
+        const publicLinksRef = database.ref('publicLinks');
 
         // Show toast message
         function showToast(message, duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg animate-fadein';
             toast.textContent = message;
-            toast.classList.add('show');
+            document.body.appendChild(toast);
+            
             setTimeout(() => {
-                toast.classList.remove('show');
+                toast.remove();
             }, duration);
         }
 
@@ -642,6 +504,7 @@
         async function createShortLink() {
             const originalUrl = originalUrlInput.value.trim();
             let customSlug = customSlugInput.value.trim();
+            const isPublic = publicToggle.checked;
             
             // Validate URL
             if (!originalUrl) {
@@ -698,8 +561,18 @@
                     originalUrl: originalUrl,
                     createdAt: createdAt,
                     viewCount: 0,
-                    redirectViews: 0
+                    redirectViews: 0,
+                    isPublic: isPublic
                 });
+                
+                // If public, add to public links
+                if (isPublic) {
+                    await publicLinksRef.child(customSlug).set({
+                        originalUrl: originalUrl,
+                        createdAt: createdAt,
+                        viewCount: 0
+                    });
+                }
                 
                 // Show result
                 shortUrlElement.value = shortUrl;
@@ -713,7 +586,7 @@
                     width: 200,
                     margin: 2,
                     color: {
-                        dark: '#4361ee',
+                        dark: '#4f46e5',
                         light: '#ffffff'
                     }
                 });
@@ -723,7 +596,7 @@
                 
                 // Scroll to result
                 setTimeout(() => {
-                    resultSection.scrollIntoView({ behavior: 'smooth' });
+                    resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }, 100);
             } catch (error) {
                 console.error("Error saving link:", error);
@@ -758,7 +631,7 @@
                 
                 if (linksArray.length === 0) {
                     contentList.innerHTML = `
-                        <div class="bg-surface p-5 rounded-xl elevation-1 border border-gray-200">
+                        <div class="bg-white p-4 rounded-lg border border-gray-200">
                             <p class="text-gray-500 text-center">No links created yet</p>
                         </div>
                     `;
@@ -770,25 +643,26 @@
                 linksArray.forEach(link => {
                     const shortUrl = `${window.location.origin}/?u=${link.slug}`;
                     const linkElement = document.createElement('div');
-                    linkElement.className = 'link-card bg-surface p-5 rounded-xl elevation-1 border border-gray-200';
+                    linkElement.className = 'bg-white p-4 rounded-lg border border-gray-200 hover:shadow-sm transition';
                     linkElement.innerHTML = `
                         <div class="flex justify-between items-start">
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-primary truncate">${shortUrl}</p>
-                                <div class="flex items-center mt-3 text-xs text-gray-500">
-                                    <span>${(link.viewCount || 0) + (link.redirectViews || 0)} total views</span>
+                                <p class="text-sm font-medium text-indigo-600 truncate">${shortUrl}</p>
+                                <div class="flex items-center mt-2 text-xs text-gray-500">
+                                    <span>${(link.viewCount || 0) + (link.redirectViews || 0)} total clicks</span>
                                     <span class="mx-1">•</span>
                                     <span>${formatDate(link.createdAt)}</span>
+                                    ${link.isPublic ? '<span class="ml-1 px-1.5 py-0.5 bg-green-100 text-green-800 text-xs rounded">Public</span>' : ''}
                                 </div>
                             </div>
                             <div class="flex space-x-1 ml-2">
-                                <button class="copy-link p-2 text-gray-500 hover:text-primary rounded-full hover:bg-gray-100 elevation-1" data-url="${shortUrl}" title="Copy">
+                                <button class="copy-link p-2 text-gray-500 hover:text-indigo-600 rounded-lg" data-url="${shortUrl}" title="Copy">
                                     <span class="material-icons-round text-sm">content_copy</span>
                                 </button>
-                                <button class="share-link p-2 text-gray-500 hover:text-primary rounded-full hover:bg-gray-100 elevation-1" data-url="${shortUrl}" title="Share">
+                                <button class="share-link p-2 text-gray-500 hover:text-indigo-600 rounded-lg" data-url="${shortUrl}" title="Share">
                                     <span class="material-icons-round text-sm">share</span>
                                 </button>
-                                <a href="${shortUrl}" target="_blank" class="p-2 text-gray-500 hover:text-primary rounded-full hover:bg-gray-100 elevation-1" title="Open">
+                                <a href="${shortUrl}" target="_blank" class="p-2 text-gray-500 hover:text-indigo-600 rounded-lg" title="Open">
                                     <span class="material-icons-round text-sm">open_in_new</span>
                                 </a>
                             </div>
@@ -845,7 +719,7 @@
                         let seconds = 10;
                         const countdownInterval = setInterval(() => {
                             seconds--;
-                            countdown.textContent = seconds;
+                            countdown.textContent = `${seconds}s`;
                             progressBar.style.width = `${seconds * 10}%`;
                             
                             if (seconds <= 0) {
@@ -866,7 +740,7 @@
                                 redirectViews: (link.redirectViews || 0) + 1
                             });
                             window.location.href = link.originalUrl;
-                        });
+                        }, { once: true });
                     } else {
                         // Invalid link, show main page
                         showToast('Invalid or expired link');
@@ -885,7 +759,7 @@
             if (!canvas) return;
             
             const link = document.createElement('a');
-            link.download = `linkshort-${new Date().getTime()}.png`;
+            link.download = `quickhop-${new Date().getTime()}.png`;
             link.href = canvas.toDataURL();
             link.click();
         }
@@ -893,7 +767,7 @@
         // Setup social sharing
         function setupSocialSharing() {
             const currentUrl = encodeURIComponent(shareUrl.value);
-            const text = encodeURIComponent("Check out this link: ");
+            const text = encodeURIComponent("Check out this link I shortened with QuickHop: ");
             
             twitterShare.href = `https://twitter.com/intent/tweet?text=${text}&url=${currentUrl}`;
             facebookShare.href = `https://www.facebook.com/sharer/sharer.php?u=${currentUrl}`;
@@ -907,6 +781,7 @@
         newLinkBtn.addEventListener('click', () => {
             originalUrlInput.value = '';
             customSlugInput.value = '';
+            publicToggle.checked = false;
             resultSection.classList.add('hidden');
             urlError.classList.add('hidden');
             slugError.classList.add('hidden');
@@ -960,12 +835,6 @@
         
         customSlugInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') createShortLink();
-        });
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            checkForRedirect();
-            loadLinks();
         });
     </script>
 </body>
