@@ -19,6 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
     
     <style>
         :root {
@@ -169,8 +170,10 @@
             appId: "1:333006092673:web:ed5927494b158703ad1080"
         };
 
-        firebase.initializeApp(firebaseConfig);
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const auth = firebase.auth();
     </script>
 
     <!-- Initial Loader - Shows while checking for redirect -->
@@ -190,7 +193,7 @@
             <div class="text-center mb-8">
                 <div class="inline-flex items-center justify-center w-20 h-20 bg-indigo-100 rounded-full mb-4 animate-pulse">
                     <svg class="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
                 </div>
                 <h1 class="text-2xl font-bold text-gray-900 mb-2">⚡ Almost There!</h1>
@@ -304,7 +307,7 @@
                     
                     <!-- CTA Button - Primary action emphasized -->
                     <button id="shortenBtn" class="w-full btn-primary font-medium py-3 px-4 rounded-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <span id="shortenText">Create Short Link</span>
+                        <span id="shortenText">Shorten Your Link</span>
                         <span id="shortenSpinner" class="ml-2 hidden">
                             <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -498,6 +501,11 @@
         const domainPrefix = document.getElementById('domainPrefix');
         const currentYear = document.getElementById('currentYear');
 
+        // Firebase References
+        const linksRef = database.ref('links');
+        const publicLinksRef = database.ref('publicLinks');
+        let currentUser = null;
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             // Set current year
@@ -515,11 +523,25 @@
                         initialLoader.style.display = 'none';
                         appContainer.classList.remove('hidden');
                         simulateProgress();
-                        loadLinks();
                     }, 300);
                 }, 500);
             });
         });
+
+        // Sign in anonymously when needed
+        async function ensureSignedIn() {
+            if (currentUser) return true;
+            
+            try {
+                const userCredential = await auth.signInAnonymously();
+                currentUser = userCredential.user;
+                return true;
+            } catch (error) {
+                console.error("Anonymous sign-in failed:", error);
+                showToast('Failed to initialize session. Please refresh.');
+                return false;
+            }
+        }
 
         // Simulate progress loading
         function simulateProgress() {
@@ -535,17 +557,14 @@
                         globalLoader.style.opacity = '0';
                         setTimeout(() => {
                             globalLoader.style.display = 'none';
+                            loadLinks();
                         }, 300);
                     }, 300);
                 }
             }, 100);
         }
 
-        // Firebase Database Reference
-        const linksRef = database.ref('links');
-        const publicLinksRef = database.ref('publicLinks');
-
-        // Show toast message - Uses position and animation for better visibility
+        // Show toast message
         function showToast(message, duration = 3000) {
             const toast = document.createElement('div');
             toast.className = 'fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg animate-fadein flex items-center';
@@ -565,7 +584,7 @@
             }, duration);
         }
 
-        // Generate random slug - Uses simple memorable format
+        // Generate random slug
         function generateSlug() {
             const adjectives = ['quick', 'fast', 'smart', 'easy', 'cool', 'neat', 'sharp', 'bright'];
             const nouns = ['link', 'hop', 'jump', 'dash', 'path', 'way', 'route', 'go'];
@@ -575,7 +594,7 @@
             return `${adj}-${noun}-${num}`;
         }
 
-        // Format date - Relative time for better UX
+        // Format date
         function formatDate(date) {
             const now = new Date();
             const diff = now - new Date(date);
@@ -587,7 +606,7 @@
             return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         }
 
-        // Validate URL - More comprehensive check
+        // Validate URL
         function isValidUrl(url) {
             try {
                 new URL(url);
@@ -597,12 +616,12 @@
             }
         }
 
-        // Validate slug - Clear requirements
+        // Validate slug
         function isValidSlug(slug) {
             return /^[a-z0-9-]+$/i.test(slug) && slug.length >= 3 && slug.length <= 30;
         }
 
-        // Create short link - With better error handling
+        // Create short link
         async function createShortLink() {
             const originalUrl = originalUrlInput.value.trim();
             let customSlug = customSlugInput.value.trim().toLowerCase();
@@ -634,59 +653,56 @@
                     return;
                 }
                 
-                // Check if slug exists
-                try {
-                    const slugExists = await checkSlugExists(customSlug);
-                    if (slugExists) {
-                        slugError.textContent = 'This alias is already taken';
-                        slugError.classList.remove('hidden');
-                        customSlugInput.focus();
-                        return;
-                    }
-                } catch (error) {
-                    console.error("Error checking slug:", error);
-                    showToast('Error checking alias availability');
-                    return;
-                }
-                
                 slugError.classList.add('hidden');
             } else {
                 customSlug = generateSlug();
             }
             
-            // Show loading - Visual feedback is crucial
+            // Show loading
             shortenText.classList.add('hidden');
             shortenSpinner.classList.remove('hidden');
             shortenBtn.disabled = true;
             
+            // Ensure user is signed in (anonymously if needed)
+            const isSignedIn = await ensureSignedIn();
+            if (!isSignedIn) {
+                shortenText.classList.remove('hidden');
+                shortenSpinner.classList.add('hidden');
+                shortenBtn.disabled = false;
+                return;
+            }
+            
             // Create link data
             const createdAt = new Date().toISOString();
             const shortUrl = `${window.location.origin}/?u=${customSlug}`;
+            const userId = currentUser.uid;
             
             // Save to Firebase
             try {
                 await linksRef.child(customSlug).set({
                     originalUrl: originalUrl,
                     createdAt: createdAt,
-                    isPublic: isPublic
+                    isPublic: isPublic,
+                    userId: userId  // Track which user created this
                 });
                 
                 // If public, add to public links
                 if (isPublic) {
                     await publicLinksRef.child(customSlug).set({
                         originalUrl: originalUrl,
-                        createdAt: createdAt
+                        createdAt: createdAt,
+                        userId: userId
                     });
                 }
                 
-                // Show result - Clear success feedback
+                // Show result
                 shortUrlElement.value = shortUrl;
                 shareUrl.value = shortUrl;
                 viewCountElement.textContent = '0';
                 createdAtElement.textContent = formatDate(createdAt);
                 resultSection.classList.remove('hidden');
                 
-                // Generate QR code - Visual representation
+                // Generate QR code
                 QRCode.toCanvas(qrCodeElement, shortUrl, {
                     width: 200,
                     margin: 2,
@@ -701,7 +717,7 @@
                 showToast('Link created successfully!');
                 loadLinks();
                 
-                // Scroll to result - Direct attention
+                // Scroll to result
                 setTimeout(() => {
                     resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                 }, 100);
@@ -722,10 +738,20 @@
             return snapshot.exists();
         }
 
-        // Load user's links - With error handling
+        // Load user's links
         async function loadLinks() {
+            if (!currentUser) {
+                // User not signed in yet, show empty state
+                contentList.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <p class="text-gray-500 text-center">Sign in to see your links</p>
+                    </div>
+                `;
+                return;
+            }
+
             try {
-                const snapshot = await linksRef.orderByChild('createdAt').once('value');
+                const snapshot = await linksRef.orderByChild('userId').equalTo(currentUser.uid).once('value');
                 const links = snapshot.val() || {};
                 
                 const linksArray = Object.keys(links).map(slug => ({
@@ -815,7 +841,7 @@
             }
         }
 
-        // Check for redirect and show landing page - With better UX
+        // Check for redirect and show landing page
         async function checkForRedirect() {
             const params = new URLSearchParams(window.location.search);
             const slug = params.get('u');
@@ -832,7 +858,7 @@
                     document.body.style.overflow = 'hidden';
                     redirectPage.classList.remove('hidden');
                     
-                    // Start countdown - Creates urgency
+                    // Start countdown
                     let seconds = 10;
                     countdown.textContent = `${seconds}s`;
                     progressBar.style.width = '100%';
@@ -871,7 +897,6 @@
         
         // Handle actual redirection
         function redirectTo(url) {
-            // Add slight delay for better perceived performance
             setTimeout(() => {
                 window.location.href = url;
             }, 200);
@@ -965,10 +990,9 @@
                     refreshBtn.querySelector('svg').classList.remove('animate-spin');
                 }, 300);
             });
-            showToast('Links refreshed');
         });
         
-        // Handle Enter key for better keyboard UX
+        // Handle Enter key
         originalUrlInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') createShortLink();
         });
@@ -985,6 +1009,22 @@
                     document.body.style.overflow = '';
                 }
             });
+        });
+
+        // Handle auth state changes
+        auth.onAuthStateChanged((user) => {
+            currentUser = user;
+            if (user) {
+                // User is signed in (anonymously or otherwise)
+                loadLinks();
+            } else {
+                // No user signed in
+                contentList.innerHTML = `
+                    <div class="bg-white p-4 rounded-lg border border-gray-200">
+                        <p class="text-gray-500 text-center">Sign in to see your links</p>
+                    </div>
+                `;
+            }
         });
     </script>
 </body>
